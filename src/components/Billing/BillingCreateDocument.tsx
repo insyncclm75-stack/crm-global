@@ -10,6 +10,7 @@ import { ChevronLeft, Plus, Trash2, FileText, Mail } from "lucide-react";
 import { calculateLineItem, calculateDocumentTotals, formatCurrencyINR, numberToWords, detectSupplyType, getCurrentFinancialYear } from "@/utils/billingUtils";
 import { DOC_TYPE_LABELS, INDIAN_STATES } from "@/types/billing";
 import type { BillingDocument, BillingDocumentItem, BillingDocumentType, BillingClient, BillingSettings, SupplyType } from "@/types/billing";
+import { useBillingClientCache } from "@/hooks/useBillingClientCache";
 
 interface BillingCreateDocumentProps {
   docType: BillingDocumentType;
@@ -31,6 +32,8 @@ interface RawItem {
 }
 
 export function BillingCreateDocument({ docType, clients, settings, getNextDocNumber, onSave, onBack }: BillingCreateDocumentProps) {
+  const { getClientBillingDetails, saveClientBillingDetails } = useBillingClientCache();
+
   const [form, setForm] = useState({
     doc_number: getNextDocNumber(docType),
     client_id: "",
@@ -56,24 +59,33 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
 
   const selectedClient = clients.find(c => c.id === form.client_id);
 
-  // Pre-fill billing details when client changes
+  // Pre-fill billing details when client changes:
+  // 1. First check saved billing cache (previously entered details)
+  // 2. Fall back to CRM client data
   useEffect(() => {
     if (selectedClient) {
-      const stateCode = selectedClient.billing_state_code ||
-        INDIAN_STATES.find(s => s.name === selectedClient.state)?.code || "";
-      setBillingDetails({
-        gstin: selectedClient.gstin || "",
-        pan: selectedClient.pan || "",
-        billing_address: selectedClient.billing_address || "",
-        city: selectedClient.city || "",
-        state: selectedClient.state || "",
-        state_code: stateCode,
-        pin_code: selectedClient.pin_code || "",
-      });
+      const cached = getClientBillingDetails(selectedClient.id);
+      if (cached) {
+        // Use previously saved billing details
+        setBillingDetails(cached);
+      } else {
+        // Fall back to CRM client data
+        const stateCode = selectedClient.billing_state_code ||
+          INDIAN_STATES.find(s => s.name === selectedClient.state)?.code || "";
+        setBillingDetails({
+          gstin: selectedClient.gstin || "",
+          pan: selectedClient.pan || "",
+          billing_address: selectedClient.billing_address || "",
+          city: selectedClient.city || "",
+          state: selectedClient.state || "",
+          state_code: stateCode,
+          pin_code: selectedClient.pin_code || "",
+        });
+      }
     } else {
       setBillingDetails({ gstin: "", pan: "", billing_address: "", city: "", state: "", state_code: "", pin_code: "" });
     }
-  }, [selectedClient]);
+  }, [selectedClient, getClientBillingDetails]);
 
   const updateBillingField = (key: keyof typeof billingDetails, value: string) => {
     const next = { ...billingDetails, [key]: value };
@@ -145,6 +157,11 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
       items: calcItems,
       created_at: new Date().toISOString(),
     };
+    // Save billing details for this client for future use
+    if (form.client_id) {
+      saveClientBillingDetails(form.client_id, billingDetails);
+    }
+
     onSave(newDoc);
     onBack();
   };
