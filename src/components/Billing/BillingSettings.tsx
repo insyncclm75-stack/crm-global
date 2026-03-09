@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, FileText, Edit } from "lucide-react";
+import { Check, FileText, Edit, Trash2, Upload } from "lucide-react";
 import { INDIAN_STATES } from "@/types/billing";
 import type { BillingSettings as BillingSettingsType } from "@/types/billing";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ interface BillingSettingsProps {
 
 export function BillingSettingsPanel({ settings: initial, onSave }: BillingSettingsProps) {
   const [s, setS] = useState<BillingSettingsType>({ ...initial });
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const signInputRef = useRef<HTMLInputElement>(null);
 
   const u = (k: keyof BillingSettingsType, v: string | number) => {
     const next = { ...s, [k]: v };
@@ -26,6 +28,26 @@ export function BillingSettingsPanel({ settings: initial, onSave }: BillingSetti
       if (st) next.company_state_code = st.code;
     }
     setS(next);
+  };
+
+  const handleFileUpload = (field: "logo_url" | "signature_url") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File too large. Max 2MB allowed.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setS(prev => ({ ...prev, [field]: reader.result as string }));
+      toast.success(`${field === "logo_url" ? "Logo" : "Signature"} uploaded`);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const handleSave = () => {
@@ -77,16 +99,50 @@ export function BillingSettingsPanel({ settings: initial, onSave }: BillingSetti
       {/* Branding */}
       <Card className="p-6">
         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Branding</h3>
+        <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload("logo_url")} />
+        <input ref={signInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload("signature_url")} />
         <div className="grid grid-cols-2 gap-6">
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3"><FileText className="h-5 w-5 text-primary" /></div>
-            <p className="text-sm font-semibold">Upload Company Logo</p>
-            <p className="text-xs text-muted-foreground mt-1">PNG or JPG, max 2MB</p>
+          {/* Logo */}
+          <div>
+            {s.logo_url ? (
+              <div className="border-2 border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Company Logo</p>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => logoInputRef.current?.click()}><Upload className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600" onClick={() => setS(prev => ({ ...prev, logo_url: undefined }))}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </div>
+                <img src={s.logo_url} alt="Company Logo" className="max-h-20 object-contain rounded" />
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all" onClick={() => logoInputRef.current?.click()}>
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3"><FileText className="h-5 w-5 text-primary" /></div>
+                <p className="text-sm font-semibold">Upload Company Logo</p>
+                <p className="text-xs text-muted-foreground mt-1">PNG or JPG, max 2MB</p>
+              </div>
+            )}
           </div>
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3"><Edit className="h-5 w-5 text-primary" /></div>
-            <p className="text-sm font-semibold">Upload Signature</p>
-            <p className="text-xs text-muted-foreground mt-1">Authorized signatory image</p>
+          {/* Signature */}
+          <div>
+            {s.signature_url ? (
+              <div className="border-2 border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Authorized Signature</p>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => signInputRef.current?.click()}><Upload className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600" onClick={() => setS(prev => ({ ...prev, signature_url: undefined }))}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </div>
+                <img src={s.signature_url} alt="Signature" className="max-h-16 object-contain rounded" />
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all" onClick={() => signInputRef.current?.click()}>
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3"><Edit className="h-5 w-5 text-primary" /></div>
+                <p className="text-sm font-semibold">Upload Signature</p>
+                <p className="text-xs text-muted-foreground mt-1">Authorized signatory image</p>
+              </div>
+            )}
           </div>
         </div>
       </Card>

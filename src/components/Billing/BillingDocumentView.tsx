@@ -44,11 +44,33 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
         <div className="border-2 border-gray-200 rounded-xl p-8">
           {/* Company Header */}
           <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-primary">{settings.company_name || "Your Company"}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{settings.company_address}</p>
-              <p className="text-xs text-muted-foreground">GSTIN: {settings.company_gstin} | PAN: {settings.company_pan}</p>
-              <p className="text-xs text-muted-foreground">Email: {settings.company_email} | Ph: {settings.company_phone}</p>
+            <div className="flex items-start gap-4">
+              {settings.logo_url && (
+                <img src={settings.logo_url} alt="Logo" className="h-14 w-auto object-contain rounded" />
+              )}
+              <div>
+                <h3 className="text-xl font-bold text-primary">{settings.company_name || "Your Company"}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{settings.company_address}</p>
+                {(settings.company_gstin || settings.company_pan) && (
+                  <p className="text-xs text-muted-foreground">
+                    {settings.company_gstin && `GSTIN: ${settings.company_gstin}`}
+                    {settings.company_gstin && settings.company_pan && " | "}
+                    {settings.company_pan && `PAN: ${settings.company_pan}`}
+                  </p>
+                )}
+                {(settings.company_email || settings.company_phone) && (
+                  <p className="text-xs text-muted-foreground">
+                    {settings.company_email && `Email: ${settings.company_email}`}
+                    {settings.company_email && settings.company_phone && " | "}
+                    {settings.company_phone && `Ph: ${settings.company_phone}`}
+                  </p>
+                )}
+                {settings.company_state && (
+                  <p className="text-xs text-muted-foreground">
+                    State: {settings.company_state}{settings.company_state_code ? ` (${settings.company_state_code})` : ""}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="text-right">
               <div className={`inline-block px-4 py-1.5 rounded-lg text-sm font-bold ${
@@ -151,7 +173,11 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold">For {settings.company_name || "Your Company"}</p>
-              <div className="h-12 mt-2 mb-2" />
+              {settings.signature_url ? (
+                <img src={settings.signature_url} alt="Signature" className="h-12 w-auto object-contain ml-auto mt-2 mb-2" />
+              ) : (
+                <div className="h-12 mt-2 mb-2" />
+              )}
               <p className="text-xs text-muted-foreground">Authorized Signatory</p>
             </div>
           </div>
