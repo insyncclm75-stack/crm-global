@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, Plus, Trash2, FileText, Mail } from "lucide-react";
 import { calculateLineItem, calculateDocumentTotals, formatCurrencyINR, numberToWords, detectSupplyType, getCurrentFinancialYear } from "@/utils/billingUtils";
-import { DOC_TYPE_LABELS } from "@/types/billing";
+import { DOC_TYPE_LABELS, INDIAN_STATES } from "@/types/billing";
 import type { BillingDocument, BillingDocumentItem, BillingDocumentType, BillingClient, BillingSettings, SupplyType } from "@/types/billing";
 
 interface BillingCreateDocumentProps {
@@ -43,11 +43,54 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
     { description: "", hsn_sac: settings.default_hsn || "998314", qty: 1, unit: "Nos", rate: 0, discount: 0, tax_rate: settings.default_tax_rate || 18 },
   ]);
 
+  // Editable billing details for the selected client
+  const [billingDetails, setBillingDetails] = useState({
+    gstin: "",
+    pan: "",
+    billing_address: "",
+    city: "",
+    state: "",
+    state_code: "",
+    pin_code: "",
+  });
+
   const selectedClient = clients.find(c => c.id === form.client_id);
+
+  // Pre-fill billing details when client changes
+  useEffect(() => {
+    if (selectedClient) {
+      const stateCode = selectedClient.billing_state_code ||
+        INDIAN_STATES.find(s => s.name === selectedClient.state)?.code || "";
+      setBillingDetails({
+        gstin: selectedClient.gstin || "",
+        pan: selectedClient.pan || "",
+        billing_address: selectedClient.billing_address || "",
+        city: selectedClient.city || "",
+        state: selectedClient.state || "",
+        state_code: stateCode,
+        pin_code: selectedClient.pin_code || "",
+      });
+    } else {
+      setBillingDetails({ gstin: "", pan: "", billing_address: "", city: "", state: "", state_code: "", pin_code: "" });
+    }
+  }, [selectedClient]);
+
+  const updateBillingField = (key: keyof typeof billingDetails, value: string) => {
+    const next = { ...billingDetails, [key]: value };
+    if (key === "state") {
+      const st = INDIAN_STATES.find(s => s.name === value);
+      if (st) next.state_code = st.code;
+    }
+    if (key === "gstin" && value.length >= 12) {
+      next.pan = value.substring(2, 12);
+    }
+    setBillingDetails(next);
+  };
+
   const supplyType: SupplyType = useMemo(() => {
-    if (!selectedClient) return "inter_state";
-    return detectSupplyType(settings.company_state_code, selectedClient.billing_state_code || "");
-  }, [selectedClient, settings.company_state_code]);
+    if (!billingDetails.state_code) return "inter_state";
+    return detectSupplyType(settings.company_state_code, billingDetails.state_code);
+  }, [billingDetails.state_code, settings.company_state_code]);
 
   const calcItems: BillingDocumentItem[] = useMemo(() => {
     return items.map((item, i) => {
@@ -79,13 +122,13 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
         company: selectedClient.company,
         first_name: selectedClient.first_name,
         last_name: selectedClient.last_name || "",
-        gstin: selectedClient.gstin,
-        pan: selectedClient.pan,
-        billing_state_code: selectedClient.billing_state_code,
-        billing_address: selectedClient.billing_address,
-        state: selectedClient.state,
-        city: selectedClient.city,
-        pin_code: selectedClient.pin_code,
+        gstin: billingDetails.gstin,
+        pan: billingDetails.pan,
+        billing_state_code: billingDetails.state_code,
+        billing_address: billingDetails.billing_address,
+        state: billingDetails.state,
+        city: billingDetails.city,
+        pin_code: billingDetails.pin_code,
       } : undefined,
       doc_date: form.doc_date,
       due_date: form.due_date,
@@ -143,20 +186,72 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
         </div>
 
         {selectedClient && (
-          <div className="mt-4 p-3 bg-muted/50 rounded-lg grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase">Address</p>
-              <p className="text-xs mt-0.5">{selectedClient.billing_address || selectedClient.state}{selectedClient.city ? `, ${selectedClient.city}` : ""}{selectedClient.pin_code ? ` - ${selectedClient.pin_code}` : ""}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase">GSTIN</p>
-              <p className="text-xs font-mono mt-0.5">{selectedClient.gstin || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase">Supply Type</p>
-              <Badge variant="secondary" className={supplyType === "intra_state" ? "bg-emerald-100 text-emerald-700 mt-0.5" : "bg-blue-100 text-blue-700 mt-0.5"}>
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Bill To — Billing Details</h4>
+              <Badge variant="secondary" className={supplyType === "intra_state" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}>
                 {supplyType === "intra_state" ? "Intra-State (CGST+SGST)" : "Inter-State (IGST)"}
               </Badge>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">GSTIN <span className="text-red-500">*</span></Label>
+                <Input
+                  value={billingDetails.gstin}
+                  onChange={e => updateBillingField("gstin", e.target.value)}
+                  placeholder="e.g., 27AABCC1234D1Z5"
+                  className="h-8 text-xs font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">PAN</Label>
+                <Input
+                  value={billingDetails.pan}
+                  onChange={e => updateBillingField("pan", e.target.value)}
+                  className="h-8 text-xs font-mono"
+                  disabled={billingDetails.gstin.length >= 12}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">State <span className="text-red-500">*</span></Label>
+                <Select value={billingDetails.state} onValueChange={v => updateBillingField("state", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select State" /></SelectTrigger>
+                  <SelectContent>
+                    {INDIAN_STATES.map(s => (
+                      <SelectItem key={s.code} value={s.name}>{s.code} - {s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">State Code</Label>
+                <Input value={billingDetails.state_code} className="h-8 text-xs" disabled />
+              </div>
+              <div className="lg:col-span-2 space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Billing Address <span className="text-red-500">*</span></Label>
+                <Input
+                  value={billingDetails.billing_address}
+                  onChange={e => updateBillingField("billing_address", e.target.value)}
+                  placeholder="Street address, building, area"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">City</Label>
+                <Input
+                  value={billingDetails.city}
+                  onChange={e => updateBillingField("city", e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">PIN Code</Label>
+                <Input
+                  value={billingDetails.pin_code}
+                  onChange={e => updateBillingField("pin_code", e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
             </div>
           </div>
         )}
