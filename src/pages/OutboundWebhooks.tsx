@@ -106,6 +106,7 @@ const OutboundWebhooks = () => {
     mutationFn: async (webhookId: string) => {
       const { data, error } = await supabase.functions.invoke("outbound-webhook-handler", {
         body: {
+          webhookId,
           orgId: effectiveOrgId,
           triggerEvent: "test",
           triggerData: {

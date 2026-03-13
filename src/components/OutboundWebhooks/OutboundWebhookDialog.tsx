@@ -133,15 +133,19 @@ export const OutboundWebhookDialog = ({
     onSuccess: async () => {
       // Create database trigger for the webhook
       try {
-        await supabase.rpc('manage_webhook_trigger', {
+        const { error: triggerError } = await supabase.rpc('manage_webhook_trigger', {
           p_table_name: targetTable,
           p_operation: targetOperation,
           p_action: 'create'
         });
+        if (triggerError) {
+          console.error("Failed to create trigger:", triggerError);
+          notify.error(`Webhook saved but trigger creation failed: ${triggerError.message}`);
+        }
       } catch (error) {
         console.error("Failed to create trigger:", error);
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ["outbound-webhooks"] });
       notify.success(webhook ? "Webhook updated" : "Webhook created");
       onOpenChange(false);
