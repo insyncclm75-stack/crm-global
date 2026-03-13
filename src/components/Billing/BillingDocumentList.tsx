@@ -96,7 +96,7 @@ export function BillingDocumentList({ documents, docType, onView, onCreate, onCo
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" onClick={() => onView(d.id)} title="View"><Eye className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" title="Download PDF"><Download className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Download PDF" onClick={() => onView(d.id)}><Download className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" title="Send Email"><Mail className="h-4 w-4" /></Button>
                       {docType !== "invoice" && onConvert && (
                         <Button variant="ghost" size="icon" onClick={() => onConvert(d)} title="Convert" className="text-emerald-600 hover:text-emerald-700">

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, Download, Mail, CreditCard } from "lucide-react";
+import { ChevronLeft, Download, Mail, CreditCard, Loader2 } from "lucide-react";
 import { formatCurrencyINR, numberToWords, statusLabel, formatFinancialYear } from "@/utils/billingUtils";
 import { DOC_TYPE_LABELS, STATUS_COLORS } from "@/types/billing";
 import type { BillingDocument, BillingPayment, BillingSettings } from "@/types/billing";
@@ -19,6 +19,47 @@ interface BillingDocumentViewProps {
 
 export function BillingDocumentView({ doc, payments, settings, onBack, onRecordPayment }: BillingDocumentViewProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const invoiceRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!invoiceRef.current) return;
+    setDownloading(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
+
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageHeight = 297; // A4 height in mm
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`${doc.doc_number}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  }, [doc.doc_number]);
 
   return (
     <div className="space-y-5">
@@ -30,7 +71,10 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
           <p className="text-sm text-muted-foreground">{DOC_TYPE_LABELS[doc.doc_type]} for {doc.client_name}</p>
         </div>
         <Badge variant="secondary" className={`${STATUS_COLORS[doc.status]} text-sm px-3 py-1`}>{statusLabel(doc.status)}</Badge>
-        <Button variant="outline"><Download className="h-4 w-4 mr-1" />PDF</Button>
+        <Button variant="outline" onClick={handleDownloadPDF} disabled={downloading}>
+          {downloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+          PDF
+        </Button>
         <Button variant="outline"><Mail className="h-4 w-4 mr-1" />Email</Button>
         {doc.doc_type === "invoice" && doc.status !== "paid" && (
           <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
@@ -40,7 +84,7 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
       </div>
 
       {/* Invoice Preview */}
-      <Card className="p-8">
+      <Card className="p-8" ref={invoiceRef}>
         <div className="border-2 border-gray-200 rounded-xl p-8">
           {/* Company Header */}
           <div className="flex justify-between items-start mb-6">
