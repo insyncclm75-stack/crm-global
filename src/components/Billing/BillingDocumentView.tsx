@@ -29,11 +29,23 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
       const html2canvas = (await import("html2canvas")).default;
       const jsPDF = (await import("jspdf")).default;
 
-      const canvas = await html2canvas(invoiceRef.current, {
+      const el = invoiceRef.current;
+      const originalWidth = el.style.width;
+      const originalMaxWidth = el.style.maxWidth;
+
+      // Fix width to 800px so text renders at a readable size on A4
+      el.style.width = "800px";
+      el.style.maxWidth = "800px";
+
+      const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
       });
+
+      // Restore original width
+      el.style.width = originalWidth;
+      el.style.maxWidth = originalMaxWidth;
 
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
