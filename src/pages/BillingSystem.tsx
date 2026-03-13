@@ -142,6 +142,10 @@ export default function BillingSystem() {
     convertDocument(doc, nextType);
   }, [convertDocument]);
 
+  const handleConvertToInvoice = useCallback((doc: BillingDocument) => {
+    convertDocument(doc, "invoice");
+  }, [convertDocument]);
+
   const handleRecordPayment = useCallback((payment: { document_id: string; amount: number; payment_date: string; payment_mode: string; reference_number: string; notes: string; org_id: string }) => {
     recordPayment(payment as any);
   }, [recordPayment]);
@@ -205,6 +209,7 @@ export default function BillingSystem() {
             onView={handleViewDoc}
             onCreate={() => handleCreateDoc("quotation")}
             onConvert={handleConvert}
+            onConvertToInvoice={handleConvertToInvoice}
           />
         );
       case "proformas":

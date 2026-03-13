@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Eye, Download, Mail, ArrowRight } from "lucide-react";
+import { Plus, Search, Eye, Download, Mail, ArrowRight, IndianRupee } from "lucide-react";
 import { formatCurrencyINR, statusLabel } from "@/utils/billingUtils";
 import { DOC_TYPE_LABELS, DOC_TYPE_COLORS, STATUS_COLORS } from "@/types/billing";
 import type { BillingDocument, BillingDocumentType } from "@/types/billing";
@@ -15,10 +15,11 @@ interface BillingDocumentListProps {
   onView: (id: string) => void;
   onCreate: () => void;
   onConvert?: (doc: BillingDocument) => void;
+  onConvertToInvoice?: (doc: BillingDocument) => void;
   initialStatusFilter?: string;
 }
 
-export function BillingDocumentList({ documents, docType, onView, onCreate, onConvert, initialStatusFilter }: BillingDocumentListProps) {
+export function BillingDocumentList({ documents, docType, onView, onCreate, onConvert, onConvertToInvoice, initialStatusFilter }: BillingDocumentListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter || "all");
 
@@ -100,8 +101,18 @@ export function BillingDocumentList({ documents, docType, onView, onCreate, onCo
                       <Button variant="ghost" size="icon" onClick={() => onView(d.id)} title="View"><Eye className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" title="Download PDF" onClick={() => onView(d.id)}><Download className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" title="Send Email"><Mail className="h-4 w-4" /></Button>
-                      {docType !== "invoice" && docType !== "credit_note" && onConvert && (
-                        <Button variant="ghost" size="icon" onClick={() => onConvert(d)} title="Convert" className="text-emerald-600 hover:text-emerald-700">
+                      {docType === "quotation" && onConvert && (
+                        <Button variant="ghost" size="icon" onClick={() => onConvert(d)} title="Convert to Proforma" className="text-sky-600 hover:text-sky-700">
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {docType === "quotation" && onConvertToInvoice && (
+                        <Button variant="ghost" size="icon" onClick={() => onConvertToInvoice(d)} title="Convert to Tax Invoice" className="text-emerald-600 hover:text-emerald-700">
+                          <IndianRupee className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {docType === "proforma" && onConvert && (
+                        <Button variant="ghost" size="icon" onClick={() => onConvert(d)} title="Convert to Tax Invoice" className="text-emerald-600 hover:text-emerald-700">
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       )}
