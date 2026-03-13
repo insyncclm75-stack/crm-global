@@ -392,7 +392,7 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground hover:text-primary"
+              className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
               onClick={() => {
                 const key = docType === "quotation" ? "default_quotation_terms"
                   : docType === "proforma" ? "default_proforma_terms"
@@ -401,7 +401,8 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
                 toast.success(`Default terms saved for all ${DOC_TYPE_LABELS[docType]}s`);
               }}
             >
-              <Save className="h-3.5 w-3.5 mr-1" />Save as default for all {DOC_TYPE_LABELS[docType]}s
+              <Save className="h-3.5 w-3.5 shrink-0" />
+              <span>Save as default for all {DOC_TYPE_LABELS[docType]}s</span>
             </Button>
           )}
         </div>
@@ -411,8 +412,8 @@ export function BillingCreateDocument({ docType, clients, settings, getNextDocNu
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pb-8">
         <Button variant="outline" onClick={onBack}>Cancel</Button>
-        <Button variant="outline" onClick={() => handleSave("draft")}><FileText className="h-4 w-4 mr-1" />{isEdit ? "Update" : "Save as Draft"}</Button>
-        <Button onClick={() => handleSave("sent")}><Mail className="h-4 w-4 mr-1" />{isEdit ? "Update & Send" : "Save & Send"}</Button>
+        <Button variant="outline" className="inline-flex items-center gap-1.5" onClick={() => handleSave("draft")}><FileText className="h-4 w-4 shrink-0" />{isEdit ? "Update" : "Save as Draft"}</Button>
+        <Button className="inline-flex items-center gap-1.5" onClick={() => handleSave("sent")}><Mail className="h-4 w-4 shrink-0" />{isEdit ? "Update & Send" : "Save & Send"}</Button>
       </div>
     </div>
   );

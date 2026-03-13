@@ -86,24 +86,24 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
           <p className="text-sm text-muted-foreground">{DOC_TYPE_LABELS[doc.doc_type]} for {doc.client_name}</p>
         </div>
         <Badge variant="secondary" className={`${STATUS_COLORS[doc.status]} text-sm px-3 py-1`}>{statusLabel(doc.status)}</Badge>
-        <Button variant="outline" onClick={handleDownloadPDF} disabled={downloading}>
-          {downloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+        <Button variant="outline" className="gap-1.5" onClick={handleDownloadPDF} disabled={downloading}>
+          {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
           PDF
         </Button>
-        <Button variant="outline"><Mail className="h-4 w-4 mr-1" />Email</Button>
+        <Button variant="outline" className="gap-1.5"><Mail className="h-4 w-4" />Email</Button>
         {onEdit && (
-          <Button variant="outline" onClick={() => onEdit(doc)}>
-            <Pencil className="h-4 w-4 mr-1" />Edit
+          <Button variant="outline" className="gap-1.5" onClick={() => onEdit(doc)}>
+            <Pencil className="h-4 w-4" />Edit
           </Button>
         )}
         {onDelete && (
-          <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setShowDeleteConfirm(true)}>
-            <Trash2 className="h-4 w-4 mr-1" />Delete
+          <Button variant="outline" className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setShowDeleteConfirm(true)}>
+            <Trash2 className="h-4 w-4" />Delete
           </Button>
         )}
         {doc.doc_type === "invoice" && doc.status !== "paid" && (
-          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
-            <CreditCard className="h-4 w-4 mr-1" />Record Payment
+          <Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
+            <CreditCard className="h-4 w-4" />Record Payment
           </Button>
         )}
       </div>
@@ -323,8 +323,8 @@ export function BillingDocumentView({ doc, payments, settings, onBack, onRecordP
             </p>
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => { onDelete?.(doc.id); setShowDeleteConfirm(false); }}>
-                <Trash2 className="h-4 w-4 mr-1" />Delete
+              <Button variant="destructive" className="gap-1.5" onClick={() => { onDelete?.(doc.id); setShowDeleteConfirm(false); }}>
+                <Trash2 className="h-4 w-4" />Delete
               </Button>
             </div>
           </Card>
