@@ -285,8 +285,8 @@ export function useSupportTickets(filters?: { status?: string; priority?: string
         });
       }
 
-      // Notify client on resolution
-      if (updates.status === "resolved") {
+      // Notify client on every status change
+      if (updates.status) {
         const { data: ticket } = await supabase
           .from("support_tickets")
           .select("contact_email, contact_phone, contact_name, ticket_number, subject, resolution_notes")
@@ -294,42 +294,100 @@ export function useSupportTickets(filters?: { status?: string; priority?: string
           .single();
         if (ticket) {
           const t = ticket as any;
+          const clientName = t.contact_name || "Valued Client";
           let notified = false;
-          const resolvedEmailSubject = `Your Support Ticket ${t.ticket_number} Has Been Resolved`;
-          if (t.contact_email) {
-            const clientName = t.contact_name || "Valued Client";
+
+          // Build status-specific email content
+          const statusEmailMap: Record<string, { subject: string; body: string }> = {
+            assigned: {
+              subject: `Your Support Ticket ${t.ticket_number} Has Been Assigned`,
+              body: `
+                <p style="font-size:15px;">Dear ${clientName},</p>
+                <p style="font-size:15px;">Your support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong> has been assigned to a team member.</p>
+                <p style="font-size:15px;">Our team will begin working on your request shortly. You will be notified when work begins.</p>
+                <p style="font-size:15px;">This is an automated email and replies to this address are not monitored.</p>
+                <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
+              `,
+            },
+            in_progress: {
+              subject: `Your Support Ticket ${t.ticket_number} Is Now In Progress`,
+              body: `
+                <p style="font-size:15px;">Dear ${clientName},</p>
+                <p style="font-size:15px;">We wanted to let you know that your support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong> is now being actively worked on by our team.</p>
+                <p style="font-size:15px;">We will keep you updated on the progress and notify you once it is resolved.</p>
+                <p style="font-size:15px;">This is an automated email and replies to this address are not monitored.</p>
+                <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
+              `,
+            },
+            awaiting_client: {
+              subject: `Action Required: Your Support Ticket ${t.ticket_number}`,
+              body: `
+                <p style="font-size:15px;">Dear ${clientName},</p>
+                <p style="font-size:15px;">We need your input on support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong>.</p>
+                <p style="font-size:15px;">Our team requires additional information or confirmation from you to proceed further. Please respond at the earliest to avoid delays.</p>
+                <p style="font-size:15px;">This is an automated email and replies to this address are not monitored. Please use the Help section on your platform to provide the required information.</p>
+                <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
+              `,
+            },
+            resolved: {
+              subject: `Your Support Ticket ${t.ticket_number} Has Been Resolved`,
+              body: `
+                <p style="font-size:15px;">Dear ${clientName},</p>
+                <p style="font-size:15px;">Your support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong> has been successfully resolved.</p>
+                ${t.resolution_notes ? `<p style="font-size:15px;"><strong>Resolution:</strong> ${t.resolution_notes}</p>` : ""}
+                <p style="font-size:15px;">Please confirm the closure of this ticket from your platform. If you are still facing any issues, please raise a new ticket through the Help section.</p>
+                <p style="font-size:15px;">This is an automated email and replies to this address are not monitored.</p>
+                <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
+              `,
+            },
+            closed: {
+              subject: `Your Support Ticket ${t.ticket_number} Has Been Closed`,
+              body: `
+                <p style="font-size:15px;">Dear ${clientName},</p>
+                <p style="font-size:15px;">Your support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong> has been closed.</p>
+                <p style="font-size:15px;">If you need further assistance, please raise a new ticket through the Help section on your platform.</p>
+                <p style="font-size:15px;">This is an automated email and replies to this address are not monitored.</p>
+                <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
+              `,
+            },
+          };
+
+          const statusContent = statusEmailMap[updates.status];
+          if (statusContent && t.contact_email) {
+            const emailHtml = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;">${statusContent.body}</div>`;
             try {
               await supabase.functions.invoke("send-email", {
                 body: {
                   to: t.contact_email,
-                  subject: resolvedEmailSubject,
-                  html: `
-                    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;">
-                      <p style="font-size:15px;">Dear ${clientName},</p>
-                      <p style="font-size:15px;">Your support ticket <strong>${t.ticket_number}</strong> regarding <strong>${t.subject}</strong> has been successfully resolved.</p>
-                      <p style="font-size:15px;">If you are still facing any issues, please raise a new ticket through the Help section of the platform, as this is an automated email and replies to this address are not monitored.</p>
-                      <p style="font-size:15px;">Thank you for your patience and continued support.</p>
-                      <p style="font-size:15px;margin-top:24px;">Best regards,<br/><strong>Team In-Sync</strong></p>
-                    </div>
-                  `,
+                  subject: statusContent.subject,
+                  html: emailHtml,
                 },
               });
               notified = true;
               await supabase.from("support_ticket_notifications").insert({
                 ticket_id: id, org_id: orgId!, channel: "email",
-                recipient: t.contact_email, subject: resolvedEmailSubject,
-                message_preview: `Ticket ${t.ticket_number} resolved notification`, status: "sent",
+                recipient: t.contact_email, subject: statusContent.subject,
+                message_preview: `Ticket ${t.ticket_number} status changed to ${updates.status}`, status: "sent",
               } as any);
             } catch (emailErr: any) {
               await supabase.from("support_ticket_notifications").insert({
                 ticket_id: id, org_id: orgId!, channel: "email",
-                recipient: t.contact_email, subject: resolvedEmailSubject,
+                recipient: t.contact_email, subject: statusContent.subject,
                 status: "failed", error_message: emailErr?.message || "Unknown error",
               } as any);
             }
           }
-          if (t.contact_phone) {
-            const waMsg = `Your ticket ${t.ticket_number} (${t.subject}) has been resolved.${t.resolution_notes ? ` Resolution: ${t.resolution_notes}` : ""}`;
+
+          // WhatsApp notification for all status changes
+          if (statusContent && t.contact_phone) {
+            const statusLabels: Record<string, string> = {
+              assigned: "assigned to a team member",
+              in_progress: "now being worked on",
+              awaiting_client: "awaiting your response",
+              resolved: `resolved${t.resolution_notes ? `. Resolution: ${t.resolution_notes}` : ""}`,
+              closed: "closed",
+            };
+            const waMsg = `Your ticket ${t.ticket_number} (${t.subject}) has been ${statusLabels[updates.status] || updates.status}.`;
             try {
               await supabase.functions.invoke("send-whatsapp-message", {
                 body: { to: t.contact_phone, message: waMsg },
@@ -347,6 +405,7 @@ export function useSupportTickets(filters?: { status?: string; priority?: string
               } as any);
             }
           }
+
           if (notified) {
             await supabase
               .from("support_tickets")
