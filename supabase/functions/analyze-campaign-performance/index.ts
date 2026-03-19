@@ -13,9 +13,9 @@ Deno.serve(async (req) => {
   try {
     const supabase = getSupabaseClient();
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY not configured');
     }
 
     // Get all organizations
@@ -116,18 +116,20 @@ Respond ONLY with valid JSON in this exact format:
   "suggestedAction": "Specific action to take"
 }`;
 
-        // Call Gemini AI
+        // Call Anthropic Claude AI
         try {
-          const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+          const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${GEMINI_API_KEY}`,
+              'x-api-key': ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01',
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gemini-2.5-flash',
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 4096,
+              system: 'You are an expert marketing analyst. Always respond with valid JSON only.',
               messages: [
-                { role: 'system', content: 'You are an expert marketing analyst. Always respond with valid JSON only.' },
                 { role: 'user', content: prompt }
               ],
               temperature: 0.7,
@@ -140,7 +142,7 @@ Respond ONLY with valid JSON in this exact format:
           }
 
           const aiData = await aiResponse.json();
-          const responseText = aiData.choices[0].message.content;
+          const responseText = aiData.content[0].text;
           
           // Extract JSON from response
           let insights;

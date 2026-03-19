@@ -19,9 +19,9 @@ Deno.serve(async (req) => {
 
     const supabase = getSupabaseClient();
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY not configured');
     }
 
     // Fetch recent campaign data
@@ -165,17 +165,19 @@ Provide helpful, data-driven answers about campaign performance, pipeline health
 Be conversational but precise. Use specific numbers when available.
 If the user asks about specific campaigns, reference the data above.`;
 
-    // Call Gemini AI
-    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+    // Call Anthropic Claude AI
+    const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
+        system: context,
         messages: [
-          { role: 'system', content: context },
           { role: 'user', content: query }
         ],
         temperature: 0.7,
@@ -189,7 +191,7 @@ If the user asks about specific campaigns, reference the data above.`;
     }
 
     const aiData = await aiResponse.json();
-    const response = aiData.choices[0].message.content;
+    const response = aiData.content[0].text;
 
     return new Response(JSON.stringify({ response }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

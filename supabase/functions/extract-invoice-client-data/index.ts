@@ -116,31 +116,33 @@ Example response:
   "vendor_company": "Your Company Name"
 }`;
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     console.log('Fetching file and converting to base64...');
     const { base64, mimeType } = await fetchFileAsBase64(fileUrl);
     console.log('File fetched, mime type:', mimeType);
 
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+    const isPdf = mimeType === 'application/pdf';
+    const documentContent = isPdf
+      ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: base64 } }
+      : { type: 'image' as const, source: { type: 'base64' as const, media_type: mimeType, data: base64 } };
 
-    console.log('Calling AI gateway...');
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+    console.log('Calling Anthropic API...');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
           {
             role: 'user',
             content: [
@@ -148,16 +150,10 @@ Example response:
                 type: 'text',
                 text: 'Please extract the client information and invoice details from this document.'
               },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl
-                }
-              }
+              documentContent
             ]
           }
         ],
-        max_tokens: 2000,
       }),
     });
 
@@ -190,7 +186,7 @@ Example response:
 
     const data = await response.json();
     console.log('AI response received');
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.content?.[0]?.text || '';
     
     let extractedData = {};
     try {

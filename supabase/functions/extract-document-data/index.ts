@@ -67,9 +67,9 @@ Example: {"invoice_number": "INV-001", "invoice_date": "2025-01-15", "due_date":
 Return ONLY a valid JSON object with these exact field names. If a field cannot be found, use null.
 Example: {"document_name": "Service Agreement 2025", "document_type": "agreement", "description": "Annual service maintenance agreement"}`;
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     // Fetch file and convert to base64
@@ -77,39 +77,36 @@ Example: {"document_name": "Service Agreement 2025", "document_type": "agreement
     const { base64, mimeType } = await fetchFileAsBase64(fileUrl);
     console.log('File fetched, mime type:', mimeType);
 
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+    // Build the content block based on mime type (document for PDFs, image for images)
+    const isPdf = mimeType === 'application/pdf';
+    const documentContent = isPdf
+      ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: base64 } }
+      : { type: 'image' as const, source: { type: 'base64' as const, media_type: mimeType, data: base64 } };
 
-    console.log('Calling AI gateway...');
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+    console.log('Calling Anthropic API...');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: 'claude-haiku-4-5-20251001',
+        system: systemPrompt,
+        max_tokens: 4096,
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
           {
             role: 'user',
             content: [
+              documentContent,
               {
                 type: 'text',
                 text: 'Please extract the data from this document.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl
-                }
               }
             ]
           }
         ],
-        max_tokens: 1000,
       }),
     });
 
@@ -142,7 +139,7 @@ Example: {"document_name": "Service Agreement 2025", "document_type": "agreement
 
     const data = await response.json();
     console.log('AI response received');
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.content?.[0]?.text || '';
     
     // Parse the JSON from the response
     let extractedData = {};

@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { contact, searchQuery, contacts } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     // Handle search query - filter contacts based on criteria
@@ -72,19 +72,20 @@ Return the IDs of contacts that match the search criteria.`;
 
       console.log('Filtering contacts with query:', searchQuery);
 
-      const searchResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+      const searchResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GEMINI_API_KEY}`,
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gemini-2.5-flash',
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4096,
+          system: searchSystemPrompt,
           messages: [
-            { role: 'system', content: searchSystemPrompt },
             { role: 'user', content: searchUserPrompt }
           ],
-          response_format: { type: "json_object" }
         }),
       });
 
@@ -93,7 +94,7 @@ Return the IDs of contacts that match the search criteria.`;
       }
 
       const searchData = await searchResponse.json();
-      const searchResult = JSON.parse(searchData.choices[0].message.content);
+      const searchResult = JSON.parse(searchData.content[0].text);
       
       console.log('Search result:', searchResult);
 
@@ -230,19 +231,20 @@ Focus heavily on the pipeline_stage (especially stage_order) and engagement_metr
 
     console.log('Scoring lead:', contactData.name);
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        response_format: { type: "json_object" }
       }),
     });
 
@@ -265,7 +267,7 @@ Focus heavily on the pipeline_stage (especially stage_order) and engagement_metr
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    const aiResponse = data.content[0].text;
     
     console.log('AI Response:', aiResponse);
     
