@@ -174,8 +174,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           <h1 className="text-lg font-semibold text-primary">In-Sync</h1>
         )}
         <div className="flex items-center gap-1">
-          <QuickDial />
-          <NotificationBell />
+          {!isPlatformAdmin && <QuickDial />}
+          {!isPlatformAdmin && <NotificationBell />}
           <Button
             variant="ghost"
             size="sm"
@@ -212,6 +212,28 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
             {/* Navigation - Compact */}
             <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-hide">
+              {/* Platform admin: only show Platform link */}
+              {isPlatformAdmin && (
+                <>
+                  <div className="pt-3 pb-1 px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
+                      Platform
+                    </p>
+                  </div>
+                  <Link
+                    to="/platform-admin"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground bg-sidebar-accent text-sidebar-primary transition-colors"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <ShieldCheck size={16} className="shrink-0" />
+                    <span>Command Center</span>
+                  </Link>
+                </>
+              )}
+
+              {/* Regular user navigation */}
+              {!isPlatformAdmin && (
+                <>
               {/* Dashboards & Reports Section */}
               {showDashboardsSection && (
                 <div className="pt-3 pb-1 px-2">
@@ -220,7 +242,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                   </p>
                 </div>
               )}
-              
+
               {canAccessFeature("dashboard") && (
                 <Link
                   to="/dashboard"
@@ -249,7 +271,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                   </p>
                 </div>
               )}
-              
+
               {canAccessFeature("pipeline_stages") && (
                 <Link
                   to="/pipeline"
@@ -260,7 +282,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span>Pipeline</span>
                 </Link>
               )}
-              
+
               {canAccessFeature("contacts") && (
                 <Link
                   to="/contacts"
@@ -404,7 +426,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       </p>
                     </div>
                   )}
-                  
+
                   {canAccessFeature("pipeline_stages") && (
                     <Link
                       to="/admin/pipeline-stages"
@@ -415,7 +437,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Stages</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("calling") && (
                     <Link
                       to="/admin/call-dispositions"
@@ -426,7 +448,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Dispositions</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("custom_fields") && (
                     <Link
                       to="/admin/custom-fields"
@@ -437,7 +459,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Fields</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("forms") && (
                     <Link
                       to="/admin/forms"
@@ -448,7 +470,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Forms</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("organization_settings") && (
                     <Link
                       to="/admin"
@@ -459,7 +481,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Settings</span>
                     </Link>
                   )}
-                  
+
                   {showAdminCommunicationSection && (
                     <div className="pt-3 pb-1 px-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
@@ -467,7 +489,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       </p>
                     </div>
                   )}
-                  
+
                   {(canAccessFeature("campaigns_whatsapp") || canAccessFeature("email_settings") || canAccessFeature("calling")) && (
                     <Link
                       to="/admin/communication-settings"
@@ -478,7 +500,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Comm Settings</span>
                     </Link>
                   )}
-                  
+
                   {userRole === "admin" && (
                     <Link
                       to="/apollo-settings"
@@ -489,7 +511,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Apollo</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("templates") && (
                     <Link
                       to="/templates"
@@ -503,24 +525,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                 </>
               )}
 
-              {isPlatformAdmin && canAccessFeature("platform_admin") && (
-                <>
-                  <div className="pt-3 pb-1 px-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
-                      Platform
-                    </p>
-                  </div>
-                  <Link
-                    to="/platform-admin"
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <ShieldCheck size={16} className="shrink-0 text-sidebar-muted" />
-                    <span>Platform</span>
-                  </Link>
-                </>
-              )}
-              
               {isAdmin && (
                 <>
                   {canAccessFeature("connectors") && (
@@ -530,7 +534,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       </p>
                     </div>
                   )}
-                  
+
                   {canAccessFeature("connectors") && (
                     <Link
                       to="/admin/connectors"
@@ -541,7 +545,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Webhooks</span>
                     </Link>
                   )}
-                  
+
                   {canAccessFeature("connectors") && (
                     <Link
                       to="/admin/outbound-webhooks"
@@ -552,8 +556,10 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span>Outbound</span>
                     </Link>
                   )}
-                  
-                  
+
+
+                </>
+              )}
                 </>
               )}
 
@@ -585,10 +591,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Main content - Compact */}
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Desktop header with notifications */}
-          <div className="hidden lg:flex items-center justify-end gap-2 px-4 py-2 border-b border-border bg-card shrink-0">
-            <NotificationBell />
-          </div>
-          <SubscriptionStatusBanner />
+          {!isPlatformAdmin && (
+            <div className="hidden lg:flex items-center justify-end gap-2 px-4 py-2 border-b border-border bg-card shrink-0">
+              <NotificationBell />
+            </div>
+          )}
+          {!isPlatformAdmin && <SubscriptionStatusBanner />}
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
             {children}
           </div>
@@ -596,7 +604,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
       
       {/* Onboarding Dialog */}
-      {userData && showOnboarding && userRole && (
+      {!isPlatformAdmin && userData && showOnboarding && userRole && (
         <OnboardingDialog
           open={showOnboarding}
           userRole={userRole}
@@ -605,10 +613,10 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       {/* Callback Reminder Alert */}
-      <CallbackReminderAlert />
+      {!isPlatformAdmin && <CallbackReminderAlert />}
 
        {/* Floating Chat Widget */}
-       <FloatingChatWidget />
+       {!isPlatformAdmin && <FloatingChatWidget />}
     </div>
   );
 }
