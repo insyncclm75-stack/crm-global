@@ -20,10 +20,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { PipelineFilters, PipelineFiltersState, emptyFilters } from "@/components/Pipeline/PipelineFilters";
 import { SendEmailDialog } from "@/components/Contact/SendEmailDialog";
 import { SendWhatsAppDialog } from "@/components/Contact/SendWhatsAppDialog";
-import { SendSMSDialog } from "@/components/Contact/SendSMSDialog";
 import { EditContactDialog } from "@/components/Contact/EditContactDialog";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { UserSelector } from "@/components/Tasks/UserSelector";
+import { UserSelector } from "@/components/common/UserSelector";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QuickDial } from "@/components/Contact/QuickDial";
@@ -96,9 +95,6 @@ export default function PipelineBoard() {
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [selectedContactForWhatsapp, setSelectedContactForWhatsapp] = useState<Contact | null>(null);
   
-  // SMS dialog state
-  const [smsDialogOpen, setSmsDialogOpen] = useState(false);
-  const [selectedContactForSms, setSelectedContactForSms] = useState<Contact | null>(null);
   
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -358,14 +354,6 @@ export default function PipelineBoard() {
     }
     setSelectedContactForWhatsapp(contact);
     setWhatsappDialogOpen(true);
-  };
-
-  const handleSmsClick = (contact: Contact, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    setSelectedContactForSms(contact);
-    setSmsDialogOpen(true);
   };
 
   const handleEditClick = (contact: Contact, e?: React.MouseEvent) => {
@@ -895,26 +883,6 @@ export default function PipelineBoard() {
                                 </Tooltip>
                               </TooltipProvider>
                               
-                              {/* SMS Button */}
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="icon"
-                                      variant="outline"
-                                      onClick={(e) => handleSmsClick(contact, e)}
-                                      disabled={!contact.primaryPhone && !contact.phone}
-                                      className="h-6 w-6"
-                                    >
-                                      <MessageCircle className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p className="text-xs">Send SMS</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              
                               {/* More Actions Dropdown */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -984,16 +952,6 @@ export default function PipelineBoard() {
           />
         )}
 
-        {/* SMS Dialog */}
-        {selectedContactForSms && (
-          <SendSMSDialog
-            open={smsDialogOpen}
-            onOpenChange={setSmsDialogOpen}
-            contactId={selectedContactForSms.id}
-            contactName={`${selectedContactForSms.first_name} ${selectedContactForSms.last_name || ''}`.trim()}
-            phoneNumber={selectedContactForSms.phone || ""}
-          />
-        )}
         {selectedContactForEdit && effectiveOrgId && (
           <EditContactDialog
             open={editDialogOpen}

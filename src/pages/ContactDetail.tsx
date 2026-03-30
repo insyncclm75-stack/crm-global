@@ -20,9 +20,7 @@ import { ContactPhones } from "@/components/Contact/ContactPhones";
 import { FillFormDialog } from "@/components/Contact/FillFormDialog";
 import { SendWhatsAppDialog } from "@/components/Contact/SendWhatsAppDialog";
 import { SendEmailDialog } from "@/components/Contact/SendEmailDialog";
-import { SendSMSDialog } from "@/components/Contact/SendSMSDialog";
 import { WhatsAppHistory } from "@/components/Contact/WhatsAppHistory";
-import { SMSHistory } from "@/components/Contact/SMSHistory";
 import { ClickToCall } from "@/components/Contact/ClickToCall";
 import { EmailAutomationJourney } from "@/components/Contact/EmailAutomationJourney";
 import { LeadScoreCard } from "@/components/Contact/LeadScoreCard";
@@ -84,7 +82,6 @@ export default function ContactDetail() {
   const [isFillFormOpen, setIsFillFormOpen] = useState(false);
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
   const [isEmailOpen, setIsEmailOpen] = useState(false);
-  const [isSMSOpen, setIsSMSOpen] = useState(false);
   const [activityType, setActivityType] = useState<string>("note");
   const [enriching, setEnriching] = useState(false);
 
@@ -380,32 +377,18 @@ export default function ContactDetail() {
                   >
                     <MessageCircle className="h-4 w-4" />
                   </Button>
-                  {contact.phone && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setIsSMSOpen(true)}
-                      title="Send SMS"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="journey">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="journey">Journey</TabsTrigger>
-                  <TabsTrigger value="sms">SMS</TabsTrigger>
                   <TabsTrigger value="automation">Automation</TabsTrigger>
                   <TabsTrigger value="notes">Notes</TabsTrigger>
                 </TabsList>
                 <TabsContent value="journey" className="space-y-4">
                   <CustomerJourney contactId={id!} />
-                </TabsContent>
-                <TabsContent value="sms" className="space-y-4">
-                  <SMSHistory contactId={id!} />
                 </TabsContent>
                 <TabsContent value="automation" className="space-y-4">
                   <EmailAutomationJourney contactId={id!} orgId={contact.org_id} />
@@ -472,15 +455,6 @@ export default function ContactDetail() {
         }}
       />
 
-      {contact.phone && (
-        <SendSMSDialog
-          open={isSMSOpen}
-          onOpenChange={setIsSMSOpen}
-          contactId={id!}
-          contactName={`${contact.first_name} ${contact.last_name || ''}`}
-          phoneNumber={contact.phone}
-        />
-      )}
     </DashboardLayout>
   );
 }

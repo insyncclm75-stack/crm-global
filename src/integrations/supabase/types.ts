@@ -1900,7 +1900,6 @@ export type Database = {
           created_by: string | null
           description: string | null
           duration_minutes: number | null
-          google_calendar_event_id: string | null
           id: string
           location_accuracy: number | null
           meeting_duration_minutes: number | null
@@ -1933,7 +1932,6 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
-          google_calendar_event_id?: string | null
           id?: string
           location_accuracy?: number | null
           meeting_duration_minutes?: number | null
@@ -1966,7 +1964,6 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
-          google_calendar_event_id?: string | null
           id?: string
           location_accuracy?: number | null
           meeting_duration_minutes?: number | null
@@ -4132,51 +4129,7 @@ export type Database = {
         }
         Relationships: []
       }
-      google_oauth_tokens: {
-        Row: {
-          access_token: string | null
-          calendar_id: string | null
-          created_at: string | null
-          id: string
-          org_id: string
-          refresh_token: string
-          token_expires_at: string | null
-          updated_at: string | null
-          user_email: string | null
-        }
-        Insert: {
-          access_token?: string | null
-          calendar_id?: string | null
-          created_at?: string | null
-          id?: string
-          org_id: string
-          refresh_token: string
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_email?: string | null
-        }
-        Update: {
-          access_token?: string | null
-          calendar_id?: string | null
-          created_at?: string | null
-          id?: string
-          org_id?: string
-          refresh_token?: string
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_email?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "google_oauth_tokens_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gst_payment_tracking: {
+gst_payment_tracking: {
         Row: {
           amount_paid: number | null
           created_at: string
@@ -6065,230 +6018,7 @@ export type Database = {
           },
         ]
       }
-      sms_bulk_campaigns: {
-        Row: {
-          campaign_name: string
-          completed_at: string | null
-          created_at: string
-          created_by: string | null
-          failed_count: number | null
-          id: string
-          message_content: string
-          org_id: string
-          pending_count: number | null
-          scheduled_at: string | null
-          sent_count: number | null
-          started_at: string | null
-          status: string
-          total_recipients: number | null
-          updated_at: string
-        }
-        Insert: {
-          campaign_name: string
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          failed_count?: number | null
-          id?: string
-          message_content: string
-          org_id: string
-          pending_count?: number | null
-          scheduled_at?: string | null
-          sent_count?: number | null
-          started_at?: string | null
-          status?: string
-          total_recipients?: number | null
-          updated_at?: string
-        }
-        Update: {
-          campaign_name?: string
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          failed_count?: number | null
-          id?: string
-          message_content?: string
-          org_id?: string
-          pending_count?: number | null
-          scheduled_at?: string | null
-          sent_count?: number | null
-          started_at?: string | null
-          status?: string
-          total_recipients?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sms_bulk_campaigns_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_bulk_campaigns_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sms_campaign_recipients: {
-        Row: {
-          campaign_id: string
-          contact_id: string | null
-          contact_name: string | null
-          created_at: string
-          delivered_at: string | null
-          error_message: string | null
-          id: string
-          org_id: string
-          phone_number: string
-          sent_at: string | null
-          status: string
-        }
-        Insert: {
-          campaign_id: string
-          contact_id?: string | null
-          contact_name?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          error_message?: string | null
-          id?: string
-          org_id: string
-          phone_number: string
-          sent_at?: string | null
-          status?: string
-        }
-        Update: {
-          campaign_id?: string
-          contact_id?: string | null
-          contact_name?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          error_message?: string | null
-          id?: string
-          org_id?: string
-          phone_number?: string
-          sent_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sms_campaign_recipients_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "sms_bulk_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_campaign_recipients_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_campaign_recipients_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts_with_stages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_campaign_recipients_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sms_messages: {
-        Row: {
-          contact_id: string | null
-          created_at: string
-          delivered_at: string | null
-          direction: string
-          error_message: string | null
-          exotel_sms_id: string | null
-          exotel_status_code: string | null
-          id: string
-          message_content: string
-          org_id: string
-          phone_number: string
-          sent_at: string | null
-          sent_by: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          contact_id?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          direction?: string
-          error_message?: string | null
-          exotel_sms_id?: string | null
-          exotel_status_code?: string | null
-          id?: string
-          message_content: string
-          org_id: string
-          phone_number: string
-          sent_at?: string | null
-          sent_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          contact_id?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          direction?: string
-          error_message?: string | null
-          exotel_sms_id?: string | null
-          exotel_status_code?: string | null
-          id?: string
-          message_content?: string
-          org_id?: string
-          phone_number?: string
-          sent_at?: string | null
-          sent_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sms_messages_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_messages_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts_with_stages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_messages_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_messages_sent_by_fkey"
-            columns: ["sent_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_audit_log: {
+subscription_audit_log: {
         Row: {
           action: string
           created_at: string | null

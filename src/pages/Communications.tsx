@@ -73,8 +73,6 @@ export default function Communications() {
   const [sending, setSending] = useState(false);
   const [mainTab, setMainTab] = useState<string>("conversations");
   const [emailCampaignSearch, setEmailCampaignSearch] = useState("");
-  const [smsCampaignSearch, setSmsCampaignSearch] = useState("");
-  const [whatsappCampaignSearch, setWhatsappCampaignSearch] = useState("");
 
   // Fetch conversations with React Query
   const { data: conversations = [], isLoading: loading, refetch: refetchConversations } = useQuery({
@@ -301,100 +299,6 @@ export default function Communications() {
     enabled: !!effectiveOrgId,
   });
 
-  // SMS Campaigns queries
-  const fetchSMSCampaigns = async () => {
-    const { data: campaignsData, error } = await supabase
-      .from("sms_bulk_campaigns")
-      .select("*")
-      .eq("org_id", effectiveOrgId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    
-    const createdByIds = [...new Set(campaignsData?.map(c => c.created_by).filter(Boolean))];
-    let profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {};
-    
-    if (createdByIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .in("id", createdByIds);
-      
-      profilesMap = (profiles || []).reduce((acc, p) => {
-        acc[p.id] = { first_name: p.first_name, last_name: p.last_name };
-        return acc;
-      }, {} as Record<string, { first_name: string | null; last_name: string | null }>);
-    }
-    
-    return (campaignsData || []).map(c => ({
-      ...c,
-      sender_name: c.created_by && profilesMap[c.created_by] 
-        ? [profilesMap[c.created_by].first_name, profilesMap[c.created_by].last_name].filter(Boolean).join(' ') 
-        : null
-    }));
-  };
-
-  const { data: smsCampaigns = [], isLoading: smsCampaignsLoading, refetch: refetchSMSCampaigns } = useQuery({
-    queryKey: ['sms-campaigns', effectiveOrgId],
-    queryFn: fetchSMSCampaigns,
-    enabled: !!effectiveOrgId,
-  });
-
-  useRealtimeSync({
-    table: 'sms_bulk_campaigns',
-    filter: `org_id=eq.${effectiveOrgId}`,
-    onUpdate: refetchSMSCampaigns,
-    onInsert: refetchSMSCampaigns,
-    enabled: !!effectiveOrgId,
-  });
-
-  // WhatsApp Campaigns queries
-  const fetchWhatsAppCampaigns = async () => {
-    const { data: campaignsData, error } = await supabase
-      .from("whatsapp_bulk_campaigns")
-      .select("*")
-      .eq("org_id", effectiveOrgId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    
-    const createdByIds = [...new Set(campaignsData?.map(c => c.created_by).filter(Boolean))];
-    let profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {};
-    
-    if (createdByIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .in("id", createdByIds);
-      
-      profilesMap = (profiles || []).reduce((acc, p) => {
-        acc[p.id] = { first_name: p.first_name, last_name: p.last_name };
-        return acc;
-      }, {} as Record<string, { first_name: string | null; last_name: string | null }>);
-    }
-    
-    return (campaignsData || []).map(c => ({
-      ...c,
-      sender_name: c.created_by && profilesMap[c.created_by] 
-        ? [profilesMap[c.created_by].first_name, profilesMap[c.created_by].last_name].filter(Boolean).join(' ') 
-        : null
-    }));
-  };
-
-  const { data: whatsappCampaigns = [], isLoading: whatsappCampaignsLoading, refetch: refetchWhatsAppCampaigns } = useQuery({
-    queryKey: ['whatsapp-campaigns', effectiveOrgId],
-    queryFn: fetchWhatsAppCampaigns,
-    enabled: !!effectiveOrgId,
-  });
-
-  useRealtimeSync({
-    table: 'whatsapp_bulk_campaigns',
-    filter: `org_id=eq.${effectiveOrgId}`,
-    onUpdate: refetchWhatsAppCampaigns,
-    onInsert: refetchWhatsAppCampaigns,
-    enabled: !!effectiveOrgId,
-  });
-
   const handleExportCampaigns = () => {
     try {
       const columns: ExportColumn[] = [
@@ -416,46 +320,6 @@ export default function Communications() {
     }
   };
 
-  const handleExportSMSCampaigns = () => {
-    try {
-      const columns: ExportColumn[] = [
-        { key: 'campaign_name', label: 'Campaign Name' },
-        { key: 'status', label: 'Status' },
-        { key: 'total_recipients', label: 'Total Recipients' },
-        { key: 'sent_count', label: 'Sent' },
-        { key: 'failed_count', label: 'Failed' },
-        { key: 'pending_count', label: 'Pending' },
-        { key: 'created_at', label: 'Created', format: formatDateForExport },
-      ];
-
-      exportToCSV(smsCampaigns, columns, `sms-campaigns-${new Date().toISOString().split('T')[0]}`);
-      
-      notify.success("Success", "SMS campaigns exported successfully");
-    } catch (error) {
-      notify.error("Error", "Failed to export SMS campaigns");
-    }
-  };
-
-  const handleExportWhatsAppCampaigns = () => {
-    try {
-      const columns: ExportColumn[] = [
-        { key: 'name', label: 'Campaign Name' },
-        { key: 'message_content', label: 'Message' },
-        { key: 'status', label: 'Status' },
-        { key: 'total_recipients', label: 'Total Recipients' },
-        { key: 'sent_count', label: 'Sent' },
-        { key: 'failed_count', label: 'Failed' },
-        { key: 'pending_count', label: 'Pending' },
-        { key: 'created_at', label: 'Created', format: formatDateForExport },
-      ];
-
-      exportToCSV(whatsappCampaigns, columns, `whatsapp-campaigns-${new Date().toISOString().split('T')[0]}`);
-      
-      notify.success("Success", "WhatsApp campaigns exported successfully");
-    } catch (error) {
-      notify.error("Error", "Failed to export WhatsApp campaigns");
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
@@ -474,26 +338,6 @@ export default function Communications() {
     return (
       campaign.name?.toLowerCase().includes(search) ||
       campaign.subject?.toLowerCase().includes(search) ||
-      campaign.sender_name?.toLowerCase().includes(search)
-    );
-  });
-
-  const filteredSMSCampaigns = smsCampaigns.filter(campaign => {
-    if (!smsCampaignSearch) return true;
-    const search = smsCampaignSearch.toLowerCase();
-    return (
-      campaign.campaign_name?.toLowerCase().includes(search) ||
-      campaign.message_content?.toLowerCase().includes(search) ||
-      campaign.sender_name?.toLowerCase().includes(search)
-    );
-  });
-
-  const filteredWhatsAppCampaigns = whatsappCampaigns.filter(campaign => {
-    if (!whatsappCampaignSearch) return true;
-    const search = whatsappCampaignSearch.toLowerCase();
-    return (
-      campaign.name?.toLowerCase().includes(search) ||
-      campaign.message_content?.toLowerCase().includes(search) ||
       campaign.sender_name?.toLowerCase().includes(search)
     );
   });
@@ -529,10 +373,6 @@ export default function Communications() {
                 <MessageSquare className="h-4 w-4 mr-2" />
                 WhatsApp Campaigns
               </TabsTrigger>
-              <TabsTrigger value="sms-campaigns">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                SMS Campaigns
-              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -554,10 +394,6 @@ export default function Communications() {
                   <TabsTrigger value="whatsapp">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     WhatsApp {getUnreadCount('whatsapp') > 0 && `(${getUnreadCount('whatsapp')})`}
-                  </TabsTrigger>
-                  <TabsTrigger value="sms">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    SMS {getUnreadCount('sms') > 0 && `(${getUnreadCount('sms')})`}
                   </TabsTrigger>
                   <TabsTrigger value="email">
                     <Mail className="h-4 w-4 mr-2" />
@@ -692,7 +528,7 @@ export default function Communications() {
                               />
                             </div>
                           ) : (
-                            // WhatsApp/SMS: chat bubble style
+                            // WhatsApp: chat bubble style
                             <div
                               className={`max-w-[70%] rounded-lg p-3 ${
                                 isOutbound
@@ -875,235 +711,17 @@ export default function Communications() {
             </div>
           </TabsContent>
 
-          <TabsContent value="sms-campaigns" className="h-full m-0 p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">SMS Campaigns</h2>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleExportSMSCampaigns}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                  <Button variant="outline" onClick={() => refetchSMSCampaigns()}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh
-                  </Button>
-                  <Button onClick={() => navigate("/bulk-sms")}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Campaign
-                  </Button>
-                </div>
-              </div>
-
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, message, or sender..."
-                  value={smsCampaignSearch}
-                  onChange={(e) => setSmsCampaignSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              {smsCampaignsLoading ? (
-                <LoadingState message="Loading SMS campaigns..." />
-              ) : filteredSMSCampaigns.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">{smsCampaigns.length === 0 ? "No SMS campaigns yet" : "No matching campaigns"}</h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      {smsCampaigns.length === 0 ? "Create your first SMS campaign to get started" : "Try adjusting your search"}
-                    </p>
-                    {smsCampaigns.length === 0 && (
-                      <Button onClick={() => navigate("/bulk-sms")}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Campaign
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Campaign Name</TableHead>
-                          <TableHead>Sender</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Recipients</TableHead>
-                          <TableHead>Sent</TableHead>
-                          <TableHead>Failed</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredSMSCampaigns.map((campaign) => (
-                          <TableRow
-                            key={campaign.id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/sms-campaigns/${campaign.id}`)}
-                          >
-                            <TableCell className="font-medium">{campaign.campaign_name}</TableCell>
-                            <TableCell>
-                              {campaign.sender_name ? (
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="h-8 w-8 bg-primary/10">
-                                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                                      {campaign.sender_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="font-medium">{campaign.sender_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                            <TableCell>{campaign.total_recipients}</TableCell>
-                            <TableCell>{campaign.sent_count}</TableCell>
-                            <TableCell>{campaign.failed_count}</TableCell>
-                            <TableCell>
-                              {format(new Date(campaign.created_at), "PP")}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/sms-campaigns/${campaign.id}`);
-                                }}
-                              >
-                                View
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
           <TabsContent value="whatsapp-campaigns" className="h-full m-0 p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">WhatsApp Campaigns</h2>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleExportWhatsAppCampaigns}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                  <Button variant="outline" onClick={() => refetchWhatsAppCampaigns()}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh
-                  </Button>
-                  <Button onClick={() => navigate("/bulk-whatsapp")}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Campaign
-                  </Button>
-                </div>
-              </div>
-
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, message, or sender..."
-                  value={whatsappCampaignSearch}
-                  onChange={(e) => setWhatsappCampaignSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              {whatsappCampaignsLoading ? (
-                <LoadingState message="Loading WhatsApp campaigns..." />
-              ) : filteredWhatsAppCampaigns.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">{whatsappCampaigns.length === 0 ? "No WhatsApp campaigns yet" : "No matching campaigns"}</h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      {whatsappCampaigns.length === 0 ? "Create your first WhatsApp campaign to get started" : "Try adjusting your search"}
-                    </p>
-                    {whatsappCampaigns.length === 0 && (
-                      <Button onClick={() => navigate("/bulk-whatsapp")}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Campaign
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Campaign Name</TableHead>
-                          <TableHead>Message</TableHead>
-                          <TableHead>Sender</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Recipients</TableHead>
-                          <TableHead>Sent</TableHead>
-                          <TableHead>Failed</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredWhatsAppCampaigns.map((campaign) => (
-                          <TableRow
-                            key={campaign.id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/whatsapp-campaigns/${campaign.id}`)}
-                          >
-                            <TableCell className="font-medium">{campaign.name}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">{campaign.message_content || '-'}</TableCell>
-                            <TableCell>
-                              {campaign.sender_name ? (
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="h-8 w-8 bg-primary/10">
-                                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                                      {campaign.sender_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="font-medium">{campaign.sender_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                            <TableCell>{campaign.total_recipients}</TableCell>
-                            <TableCell>{campaign.sent_count}</TableCell>
-                            <TableCell>{campaign.failed_count}</TableCell>
-                            <TableCell>
-                              {format(new Date(campaign.created_at), "PP")}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/whatsapp-campaigns/${campaign.id}`);
-                                }}
-                              >
-                                View
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="flex flex-col items-center justify-center py-16">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">WhatsApp Campaigns</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                Bulk WhatsApp campaigns have moved to our dedicated WhatsApp platform for a better experience.
+              </p>
+              <Button onClick={() => window.open("https://wa.in-sync.co.in", "_blank")}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Open WhatsApp Campaign Manager
+              </Button>
             </div>
           </TabsContent>
         </Tabs>

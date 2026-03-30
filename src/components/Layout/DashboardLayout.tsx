@@ -12,14 +12,12 @@ import {
   Contact,
   GitBranch,
   BarChart3,
-  Network,
   UserCog,
   TrendingUp,
   Lightbulb,
   UsersRound,
   Layers,
   PhoneCall,
-  Package,
   CheckSquare,
   Award,
   FileText,
@@ -31,21 +29,16 @@ import {
   MessageSquare,
   Mail,
   Send,
-  Database,
-  CreditCard,
   Activity,
-  Key,
   Star,
   MessageCircle,
   Phone,
   Sparkles,
   Briefcase,
   CalendarDays,
-  IndianRupee,
-  LifeBuoy,
+  ExternalLink,
 } from "lucide-react";
 import { useNotification } from "@/hooks/useNotification";
-import { PlatformAdminBanner } from "@/components/PlatformAdminBanner";
 import { OnboardingDialog } from "@/components/Onboarding/OnboardingDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import SubscriptionStatusBanner from "@/components/Subscription/SubscriptionStatusBanner";
@@ -145,7 +138,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
     canAccessFeature("campaigns_email") || canAccessFeature("campaigns_whatsapp") || canAccessFeature("ai_insights");
   
   const showOperationsSection = canAccessFeature("campaigns_email") || canAccessFeature("contacts") || 
-    canAccessFeature("pipeline_stages") || canAccessFeature("calling") || canAccessFeature("redefine_data_repository");
+    canAccessFeature("pipeline_stages") || canAccessFeature("calling");
   
   const showAdminCommunicationSection = isAdmin && (
     canAccessFeature("campaigns_whatsapp") || 
@@ -168,8 +161,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
     canAccessFeature("users") || 
     canAccessFeature("teams") || 
     canAccessFeature("designations") || 
-    canAccessFeature("approval_matrix") ||
-    canAccessFeature("org_chart")
+    canAccessFeature("approval_matrix")
   );
 
   return (
@@ -280,47 +272,53 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Link>
               )}
 
-              {canAccessFeature("communications") && (
-                <Link
-                  to="/communications"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <MessageSquare size={16} className="shrink-0 text-sidebar-muted" />
-                  <span>Campaigns</span>
-                </Link>
+              {(canAccessFeature("campaigns_whatsapp") || canAccessFeature("campaigns_email")) && (
+                <>
+                  <div className="pt-3 pb-1 px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
+                      Campaigns
+                    </p>
+                  </div>
+                  {canAccessFeature("campaigns_whatsapp") && (
+                    <a
+                      href="https://wa.in-sync.co.in"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <MessageSquare size={16} className="shrink-0 text-sidebar-muted" />
+                      <span>WhatsApp</span>
+                      <ExternalLink size={12} className="ml-auto shrink-0 text-sidebar-muted opacity-50" />
+                    </a>
+                  )}
+                  {canAccessFeature("campaigns_email") && (
+                    <a
+                      href="https://email.in-sync.co.in"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Mail size={16} className="shrink-0 text-sidebar-muted" />
+                      <span>Email</span>
+                      <ExternalLink size={12} className="ml-auto shrink-0 text-sidebar-muted opacity-50" />
+                    </a>
+                  )}
+                </>
               )}
 
-              {canAccessFeature("redefine_data_repository") && orgName.includes("Redefine") && (
-                <Link
-                  to="/redefine-repository"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Database size={16} className="shrink-0 text-sidebar-muted" />
-                  <span>Data Repository</span>
-                </Link>
-              )}
-
-              {canAccessFeature("inventory") && orgName === "C.Parekh & Co" && (
-                <Link
-                  to="/inventory"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Package size={16} className="shrink-0 text-sidebar-muted" />
-                  <span>Inventory</span>
-                </Link>
-              )}
-
-              <Link
-                to="/tasks"
+              <a
+                href="https://task.in-sync.co.in"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
                 onClick={() => setSidebarOpen(false)}
               >
                 <CheckSquare size={16} className="shrink-0 text-sidebar-muted" />
                 <span>Tasks</span>
-              </Link>
+                <ExternalLink size={12} className="ml-auto shrink-0 text-sidebar-muted opacity-50" />
+              </a>
 
                <Link
                  to="/chat"
@@ -333,7 +331,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
               <div className="pt-3 pb-1 px-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
-                  Clients & Billing
+                  Clients
                 </p>
               </div>
 
@@ -346,30 +344,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>Clients</span>
               </Link>
 
-              <Link
-                to="/billing-system"
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <IndianRupee size={16} className="shrink-0 text-sidebar-muted" />
-                <span>Billing & Invoicing</span>
-              </Link>
-
-              <div className="pt-3 pb-1 px-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
-                  Support
-                </p>
-              </div>
-              <Link
-                to="/support-tickets"
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <LifeBuoy size={16} className="shrink-0 text-sidebar-muted" />
-                <span>Support Tickets</span>
-              </Link>
-
-              {/* GST Dashboard is now integrated into main Dashboard */}
               {showManagementSection && (
                 <>
                   <div className="pt-3 pb-1 px-2">
@@ -415,16 +389,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                       <CheckSquare size={16} className="shrink-0 text-sidebar-muted" />
                       <span>Approvals</span>
-                    </Link>
-                  )}
-                  {canAccessFeature("org_chart") && (
-                    <Link
-                      to="/org-chart"
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <Network size={16} className="shrink-0 text-sidebar-muted" />
-                      <span>Org Chart</span>
                     </Link>
                   )}
                 </>
@@ -554,20 +518,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                     <ShieldCheck size={16} className="shrink-0 text-sidebar-muted" />
                     <span>Platform</span>
                   </Link>
-                  <Link
-                    to="/platform-admin/subscriptions"
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <CreditCard size={16} className="shrink-0 text-sidebar-muted" />
-                    <span>Subscriptions</span>
-                  </Link>
                 </>
               )}
               
               {isAdmin && (
                 <>
-                  {(canAccessFeature("connectors") || canAccessFeature("api_keys")) && (
+                  {canAccessFeature("connectors") && (
                     <div className="pt-3 pb-1 px-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-primary">
                         Integrations
@@ -597,16 +553,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   )}
                   
-                  {canAccessFeature("api_keys") && (
-                    <Link
-                      to="/admin/api-keys"
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <Key size={16} className="shrink-0 text-sidebar-muted" />
-                      <span>API Keys</span>
-                    </Link>
-                  )}
                   
                 </>
               )}
@@ -642,7 +588,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="hidden lg:flex items-center justify-end gap-2 px-4 py-2 border-b border-border bg-card shrink-0">
             <NotificationBell />
           </div>
-          <PlatformAdminBanner />
           <SubscriptionStatusBanner />
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
             {children}

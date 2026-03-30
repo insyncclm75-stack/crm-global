@@ -462,7 +462,7 @@ export const CustomerJourney = ({ contactId }: CustomerJourneyProps) => {
                             className="flex items-center gap-2"
                           >
                             <Video className="h-4 w-4" />
-                            Join Google Meet
+                            Join Meeting
                           </Button>
                           {activity.scheduled_at && new Date(activity.scheduled_at) > new Date() && (
                             <Badge variant="secondary">

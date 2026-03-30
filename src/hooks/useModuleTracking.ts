@@ -32,17 +32,12 @@ const MODULE_MAP: Record<string, { key: string; name: string; icon: string; feat
   '/contacts': { key: 'contacts', name: 'Contacts', icon: 'Contact', featureKey: 'contacts' },
   '/pipeline': { key: 'pipeline', name: 'Pipeline', icon: 'GitBranch', featureKey: 'pipeline_stages' },
   '/templates': { key: 'templates', name: 'Templates', icon: 'FileText', featureKey: 'templates' },
-  '/email-campaigns': { key: 'email_campaigns', name: 'Campaigns', icon: 'Mail', featureKey: 'campaigns_email' },
-  '/whatsapp-campaigns': { key: 'whatsapp_campaigns', name: 'WhatsApp', icon: 'MessageCircle', featureKey: 'campaigns_whatsapp' },
-  '/communications': { key: 'communications', name: 'Comms', icon: 'MessageSquare', featureKey: 'communications' },
+  // Campaigns are external: wa.in-sync.co.in / email.in-sync.co.in
   '/reports': { key: 'reports', name: 'Reports', icon: 'BarChart3', featureKey: 'analytics' },
   '/forms': { key: 'forms', name: 'Forms', icon: 'FileText', featureKey: 'forms' },
   '/users': { key: 'users', name: 'Users', icon: 'Users', featureKey: 'users' },
   '/teams': { key: 'teams', name: 'Teams', icon: 'Users', featureKey: 'teams' },
-  '/inventory': { key: 'inventory', name: 'Inventory', icon: 'Package', featureKey: 'inventory' },
   '/call-logs': { key: 'call_logs', name: 'Call Logs', icon: 'Phone', featureKey: 'calling' },
-  '/whatsapp-dashboard': { key: 'whatsapp_dashboard', name: 'WhatsApp', icon: 'MessageCircle', featureKey: 'whatsapp' },
-  '/api-keys': { key: 'api_keys', name: 'API Keys', icon: 'Key', featureKey: 'api_management' },
 };
 
 export const useModuleTracking = () => {

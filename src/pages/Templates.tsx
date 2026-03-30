@@ -204,7 +204,7 @@ const Templates = () => {
           <div>
             <h1 className="text-3xl font-bold">Message Templates</h1>
             <p className="text-muted-foreground mt-2">
-              Manage your WhatsApp, Email, and SMS templates
+              Manage your WhatsApp and Email templates
             </p>
           </div>
           <div className="flex gap-2">

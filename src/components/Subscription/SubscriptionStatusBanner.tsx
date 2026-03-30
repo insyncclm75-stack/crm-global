@@ -2,13 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgContext } from "@/hooks/useOrgContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { AlertCircle, Clock, Lock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
 export default function SubscriptionStatusBanner() {
   const { effectiveOrgId } = useOrgContext();
-  const navigate = useNavigate();
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription-status", effectiveOrgId],
@@ -68,16 +64,8 @@ export default function SubscriptionStatusBanner() {
       <Alert variant={alertConfig.variant}>
         <Icon className="h-4 w-4" />
         <AlertTitle>{alertConfig.title}</AlertTitle>
-        <AlertDescription className="flex items-center justify-between">
-          <span>{alertConfig.description}</span>
-          <Button 
-            onClick={() => navigate("/billing")}
-            variant="outline"
-            size="sm"
-            className="ml-4"
-          >
-            Pay Now
-          </Button>
+        <AlertDescription>
+          {alertConfig.description}
         </AlertDescription>
       </Alert>
     </div>

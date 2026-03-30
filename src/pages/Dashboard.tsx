@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { useOrgContext } from "@/hooks/useOrgContext";
 import { LoadingState } from "@/components/common/LoadingState";
-import { useTasks } from "@/hooks/useTasks";
 import { useCallbackReminders } from "@/hooks/useCallbackReminders";
 import DateRangeFilter, { DateRangePreset, getDateRangeFromPreset } from "@/components/common/DateRangeFilter";
 import { format } from "date-fns";
@@ -20,7 +19,6 @@ import { DueToDeptDialog } from "@/components/Dashboard/DueToDeptDialog";
 import { DashboardRevenueChart } from "@/components/Dashboard/DashboardRevenueChart";
 import { DashboardPipelineChart } from "@/components/Dashboard/DashboardPipelineChart";
 import { DashboardActivityChart } from "@/components/Dashboard/DashboardActivityChart";
-import { DashboardTasksSection } from "@/components/Dashboard/DashboardTasksSection";
 
 // Revenue Dashboard components
 import { MonthlyGoalTracker } from "@/components/Revenue/MonthlyGoalTracker";
@@ -155,24 +153,6 @@ export default function Dashboard() {
       
       const { data, error } = await supabase
         .from("whatsapp_bulk_campaigns")
-        .select("sent_count, created_at")
-        .eq("org_id", effectiveOrgId)
-        .gte("created_at", dateRange.from.toISOString())
-        .lte("created_at", dateRange.to.toISOString());
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!effectiveOrgId,
-  });
-
-  const { data: smsCampaigns, isLoading: smsLoading } = useQuery({
-    queryKey: ["sms-campaigns-activity", effectiveOrgId, format(dateRange.from, "yyyy-MM-dd"), format(dateRange.to, "yyyy-MM-dd")],
-    queryFn: async () => {
-      if (!effectiveOrgId) throw new Error("No organization context");
-      
-      const { data, error } = await supabase
-        .from("sms_bulk_campaigns")
         .select("sent_count, created_at")
         .eq("org_id", effectiveOrgId)
         .gte("created_at", dateRange.from.toISOString())
@@ -368,19 +348,19 @@ export default function Dashboard() {
     enabled: !!effectiveOrgId,
   });
 
-  const activityLoading = emailLoading || whatsappLoading || callsLoading || smsLoading;
+  const activityLoading = emailLoading || whatsappLoading || callsLoading;
 
   // Process communication activity data into daily timeline format
   const dailyActivityData = useMemo(() => {
     // Create a map of dates within range
-    const dateMap: Record<string, { calls: number; emails: number; whatsapp: number; sms: number }> = {};
+    const dateMap: Record<string, { calls: number; emails: number; whatsapp: number }> = {};
     
     // Initialize all dates in range
     const start = new Date(dateRange.from);
     const end = new Date(dateRange.to);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateKey = format(new Date(d), "yyyy-MM-dd");
-      dateMap[dateKey] = { calls: 0, emails: 0, whatsapp: 0, sms: 0 };
+      dateMap[dateKey] = { calls: 0, emails: 0, whatsapp: 0 };
     }
 
     // Add call counts
@@ -407,14 +387,6 @@ export default function Dashboard() {
       }
     });
 
-    // Add SMS counts from campaigns
-    smsCampaigns?.forEach((campaign: any) => {
-      const dateKey = format(new Date(campaign.created_at), "yyyy-MM-dd");
-      if (dateMap[dateKey]) {
-        dateMap[dateKey].sms += campaign.sent_count || 0;
-      }
-    });
-
     // Convert to array and format dates for display
     return Object.entries(dateMap)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -422,7 +394,7 @@ export default function Dashboard() {
         date: format(new Date(date), "MMM d"),
         ...counts,
       }));
-  }, [emailCampaigns, whatsappCampaigns, smsCampaigns, callLogs, dateRange]);
+  }, [emailCampaigns, whatsappCampaigns, callLogs, dateRange]);
 
   // Calculate Due to Dept (all-time GST collected - all-time GST paid to dept)
   const dueToDept = useMemo(() => {
@@ -880,12 +852,6 @@ export default function Dashboard() {
     return { ytdDeals, ytdProposals, ytdRevenue, ytdDealsTarget, ytdProposalsTarget, ytdRevenueTarget, monthlyRevenueTrend };
   }, [monthlyActuals]);
 
-  // Fetch tasks for analytics
-  const { data: tasksData } = useTasks({ filter: "assigned_to_me" });
-  const allTasks = tasksData?.tasks || [];
-  const pendingTasksCount = allTasks.filter(t => t.status === "pending").length;
-  const overdueTasksCount = allTasks.filter(t => t.isOverdue && t.status !== "completed").length;
-
   const loading = orgLoading || statsLoading || pipelineLoading || revenueLoading || actualsLoading;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -897,7 +863,6 @@ export default function Dashboard() {
     await queryClient.invalidateQueries({ queryKey: ["monthly-actuals-backend-v2"] });
     await queryClient.invalidateQueries({ queryKey: ["email-campaigns-activity"] });
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-campaigns-activity"] });
-    await queryClient.invalidateQueries({ queryKey: ["sms-campaigns-activity"] });
     await queryClient.invalidateQueries({ queryKey: ["call-logs-activity"] });
     setIsRefreshing(false);
   };
@@ -1151,11 +1116,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Key Metrics */}
-            <DashboardStatsCards 
-              stats={stats} 
-              pendingTasksCount={pendingTasksCount} 
-              overdueTasksCount={overdueTasksCount} 
-            />
+            <DashboardStatsCards stats={stats} />
 
             {/* Revenue Metrics */}
             <DashboardRevenueCards 
@@ -1192,8 +1153,6 @@ export default function Dashboard() {
               <DashboardActivityChart data={dailyActivityData} isLoading={activityLoading} />
             </div>
 
-            {/* My Tasks Section */}
-            <DashboardTasksSection limit={5} />
           </>
         )}
       </div>

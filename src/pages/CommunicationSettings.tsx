@@ -748,176 +748,6 @@ function ExotelSettingsTab() {
   );
 }
 
-// SMS Settings Tab Component
-function SMSSettingsTab() {
-  const { effectiveOrgId } = useOrgContext();
-  const notify = useNotification();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState({
-    sms_enabled: false,
-    sms_sender_id: "",
-  });
-  const [exotelConfigured, setExotelConfigured] = useState(false);
-
-  useEffect(() => {
-    if (effectiveOrgId) {
-      fetchSettings();
-    }
-  }, [effectiveOrgId]);
-
-  const fetchSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("exotel_settings")
-        .select("*")
-        .eq("org_id", effectiveOrgId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (data) {
-        setExotelConfigured(!!data.api_key && !!data.api_token && !!data.account_sid);
-        setSettings({
-          sms_enabled: data.sms_enabled ?? false,
-          sms_sender_id: data.sms_sender_id || "",
-        });
-      }
-    } catch (error) {
-      notify.error("Error loading settings", error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("exotel_settings")
-        .update({
-          sms_enabled: settings.sms_enabled,
-          sms_sender_id: settings.sms_sender_id,
-        })
-        .eq("org_id", effectiveOrgId);
-
-      if (error) throw error;
-      notify.success("Settings saved", "SMS settings have been updated");
-    } catch (error) {
-      notify.error("Error saving settings", error as Error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return <LoadingState message="Loading SMS settings..." />;
-  }
-
-  if (!exotelConfigured) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Configure Exotel First</CardTitle>
-          <CardDescription>
-            SMS uses the same Exotel credentials as calling. Please configure your Exotel settings first.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Go to the "Calling (Exotel)" tab to enter your Exotel API credentials.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>SMS Settings</CardTitle>
-          <CardDescription>
-            Configure SMS messaging through Exotel
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Enable SMS</Label>
-              <p className="text-sm text-muted-foreground">
-                Turn on SMS messaging for this organization
-              </p>
-            </div>
-            <Switch
-              checked={settings.sms_enabled}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, sms_enabled: checked })
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sms_sender_id">Sender ID</Label>
-            <Input
-              id="sms_sender_id"
-              placeholder="e.g., MYCOMP or your registered sender ID"
-              value={settings.sms_sender_id}
-              onChange={(e) =>
-                setSettings({ ...settings, sms_sender_id: e.target.value })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              This is the sender ID registered with Exotel for sending SMS messages
-            </p>
-          </div>
-
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save SMS Settings
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>SMS Features</CardTitle>
-          <CardDescription>
-            Available SMS features with your Exotel integration
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Send individual SMS from contact detail page
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Bulk SMS campaigns
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              SMS delivery status tracking
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              SMS history per contact
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Inbound SMS support
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 export default function CommunicationSettings() {
   return (
     <DashboardLayout>
@@ -925,19 +755,15 @@ export default function CommunicationSettings() {
         <div>
           <h1 className="text-3xl font-bold">Communication Settings</h1>
           <p className="text-muted-foreground">
-            Configure WhatsApp, SMS, Email, and Calling integrations
+            Configure WhatsApp, Email, and Calling integrations
           </p>
         </div>
 
         <Tabs defaultValue="whatsapp" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="whatsapp">
               <MessageSquare className="h-4 w-4 mr-2" />
               WhatsApp
-            </TabsTrigger>
-            <TabsTrigger value="sms">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              SMS
             </TabsTrigger>
             <TabsTrigger value="email">
               <Mail className="h-4 w-4 mr-2" />
@@ -951,10 +777,6 @@ export default function CommunicationSettings() {
 
           <TabsContent value="whatsapp" className="space-y-6">
             <WhatsAppSettingsTab />
-          </TabsContent>
-
-          <TabsContent value="sms" className="space-y-6">
-            <SMSSettingsTab />
           </TabsContent>
 
           <TabsContent value="email" className="space-y-6">

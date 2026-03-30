@@ -7,7 +7,6 @@ interface DailyActivityData {
   calls: number;
   emails: number;
   whatsapp: number;
-  sms: number;
 }
 
 interface DashboardActivityChartProps {
@@ -28,13 +27,13 @@ export function DashboardActivityChart({ data, isLoading }: DashboardActivityCha
     );
   }
 
-  const hasData = data.some(d => d.calls > 0 || d.emails > 0 || d.whatsapp > 0 || d.sms > 0);
+  const hasData = data.some(d => d.calls > 0 || d.emails > 0 || d.whatsapp > 0);
 
   return (
     <Card className="p-3">
       <div className="mb-2">
         <h3 className="text-sm font-medium">Communication Activity</h3>
-        <p className="text-[10px] text-muted-foreground">Daily trends for calls, emails, WhatsApp & SMS</p>
+        <p className="text-[10px] text-muted-foreground">Daily trends for calls, emails & WhatsApp</p>
       </div>
       {!hasData ? (
         <div className="h-[180px] flex items-center justify-center text-muted-foreground text-xs">
@@ -98,15 +97,6 @@ export function DashboardActivityChart({ data, isLoading }: DashboardActivityCha
               dot={{ r: 2 }}
               activeDot={{ r: 4 }}
               name="WhatsApp"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="sms" 
-              stroke="#EC4899" 
-              strokeWidth={2}
-              dot={{ r: 2 }}
-              activeDot={{ r: 4 }}
-              name="SMS"
             />
           </LineChart>
         </ResponsiveContainer>

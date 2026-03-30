@@ -86,11 +86,6 @@ const TARGET_TABLES = [
     { value: "whatsapp_campaign_recipients", label: "WhatsApp Campaign Recipients" },
     { value: "whatsapp_settings", label: "WhatsApp Settings" },
   ]},
-  { group: "SMS", items: [
-    { value: "sms_messages", label: "SMS Messages" },
-    { value: "sms_bulk_campaigns", label: "SMS Campaigns" },
-    { value: "sms_campaign_recipients", label: "SMS Campaign Recipients" },
-  ]},
   { group: "Calls", items: [
     { value: "call_logs", label: "Call Logs" },
     { value: "call_dispositions", label: "Call Dispositions" },

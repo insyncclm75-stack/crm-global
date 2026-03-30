@@ -30,7 +30,7 @@ const EXPORT_TABLES: { category: string; tables: string[] }[] = [
   },
   {
     category: "Communication",
-    tables: ["communication_templates", "email_templates", "email_conversations", "whatsapp_messages", "sms_messages"],
+    tables: ["communication_templates", "email_templates", "email_conversations", "whatsapp_messages"],
   },
   {
     category: "Email Campaigns",
@@ -39,10 +39,6 @@ const EXPORT_TABLES: { category: string; tables: string[] }[] = [
   {
     category: "WhatsApp Campaigns",
     tables: ["whatsapp_bulk_campaigns", "whatsapp_campaign_recipients"],
-  },
-  {
-    category: "SMS Campaigns",
-    tables: ["sms_bulk_campaigns", "sms_campaign_recipients"],
   },
   {
     category: "Analytics",

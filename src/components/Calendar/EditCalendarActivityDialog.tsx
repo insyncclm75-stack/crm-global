@@ -285,7 +285,7 @@ export function EditCalendarActivityDialog({
                 type="url"
                 value={meetingLink}
                 onChange={(e) => setMeetingLink(e.target.value)}
-                placeholder="https://meet.google.com/..."
+                placeholder="https://..."
               />
             </div>
           )}

@@ -12,8 +12,8 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
 import PublicForm from "./pages/PublicForm";
-import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import LandingPage from "./pages/LandingPage";
 import Install from "./pages/Install";
 
 // Page loader component
@@ -39,25 +39,9 @@ const SavedReports = lazy(() => import("./pages/SavedReports"));
 const CallingDashboard = lazy(() => import("./pages/CallingDashboard"));
 const CallLogs = lazy(() => import("./pages/CallLogs"));
 
-// Lazy loaded pages - Campaigns
+// Lazy loaded pages - Templates (campaigns are external: wa.in-sync.co.in / email.in-sync.co.in)
 const Templates = lazy(() => import("./pages/Templates"));
 const TemplateBuilder = lazy(() => import("./pages/TemplateBuilder"));
-const WhatsAppDashboard = lazy(() => import("./pages/WhatsAppDashboard"));
-const BulkWhatsAppSender = lazy(() => import("./pages/BulkWhatsAppSender"));
-const WhatsAppCampaigns = lazy(() => import("./pages/WhatsAppCampaigns"));
-const WhatsAppCampaignDetail = lazy(() => import("./pages/WhatsAppCampaignDetail"));
-const SMSCampaigns = lazy(() => import("./pages/SMSCampaigns"));
-const SMSCampaignDetail = lazy(() => import("./pages/SMSCampaignDetail"));
-const BulkSMSSender = lazy(() => import("./pages/BulkSMSSender"));
-const EmailCampaigns = lazy(() => import("./pages/EmailCampaigns"));
-const EmailCampaignDetail = lazy(() => import("./pages/EmailCampaignDetail"));
-const BulkEmailSender = lazy(() => import("./pages/BulkEmailSender"));
-const EmailAutomations = lazy(() => import("./pages/EmailAutomations"));
-const EmailAutomationSettings = lazy(() => import("./pages/EmailAutomationSettings"));
-const CampaignOverview = lazy(() => import("./pages/Campaigns/CampaignOverview"));
-const AIInsightsDashboard = lazy(() => import("./pages/Campaigns/AIInsightsDashboard"));
-const Communications = lazy(() => import("./pages/Communications"));
-const QueueStatus = lazy(() => import("./pages/QueueStatus"));
 
 // Lazy loaded pages - Admin
 const TechAdmin = lazy(() => import("./pages/TechAdmin"));
@@ -70,7 +54,6 @@ const Designations = lazy(() => import("./pages/Designations"));
 const CustomFields = lazy(() => import("./pages/CustomFields"));
 const Forms = lazy(() => import("./pages/Forms"));
 const Connectors = lazy(() => import("./pages/Connectors"));
-const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const OutboundWebhooks = lazy(() => import("./pages/OutboundWebhooks"));
 const CommunicationSettings = lazy(() => import("./pages/CommunicationSettings"));
 const WhatsAppSettings = lazy(() => import("./pages/WhatsAppSettings"));
@@ -78,20 +61,16 @@ const ExotelSettings = lazy(() => import("./pages/ExotelSettings"));
 const ApolloSettings = lazy(() => import("./pages/ApolloSettings"));
 const EmailSettings = lazy(() => import("./pages/EmailSettings"));
 
+// Lazy loaded pages - Walkthroughs & Onboarding
+const Demo = lazy(() => import("./pages/Demo"));
+const LandingDemo = lazy(() => import("./pages/LandingDemo"));
+const OnboardingWizard = lazy(() => import("./pages/OnboardingWizard"));
+
 // Lazy loaded pages - Other
 const DataExport = lazy(() => import("./pages/admin/DataExport"));
-const OrgChart = lazy(() => import("./pages/OrgChart"));
 const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin"));
-const Documentation = lazy(() => import("./pages/Documentation"));
-const RedefineDataRepository = lazy(() => import("./pages/RedefineDataRepository"));
-const Subscriptions = lazy(() => import("./pages/Subscriptions"));
-const Inventory = lazy(() => import("./pages/Inventory"));
-const BillingSystem = lazy(() => import("./pages/BillingSystem"));
-const Tasks = lazy(() => import("./pages/Tasks"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Chat = lazy(() => import("./pages/Chat"));
-const SupportTickets = lazy(() => import("./pages/SupportTickets"));
-// GSTDashboard is now integrated into main Dashboard
 
 const App = () => (
   <AuthProvider>
@@ -102,15 +81,22 @@ const App = () => (
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-          {/* Public routes - static imports */}
-          <Route path="/" element={<Login />} />
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/landing-demo" element={<LandingDemo />} />
           <Route path="/form/:formId" element={<PublicForm />} />
-          <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
-          
+
+          {/* Onboarding */}
+          <Route path="/onboarding" element={
+            <ProtectedRoute>
+              <OnboardingWizard />
+            </ProtectedRoute>
+          } />
           {/* CRM Routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
@@ -198,101 +184,7 @@ const App = () => (
             </ProtectedRoute>
           } />
           
-          <Route path="/whatsapp-messages" element={
-            <ProtectedRoute>
-              <WhatsAppDashboard />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/whatsapp/bulk-send" element={
-            <ProtectedRoute>
-              <BulkWhatsAppSender />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/whatsapp/campaigns" element={
-            <ProtectedRoute>
-              <WhatsAppCampaigns />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/whatsapp/campaigns/:id" element={
-            <ProtectedRoute>
-              <WhatsAppCampaignDetail />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/sms-campaigns" element={
-            <ProtectedRoute>
-              <SMSCampaigns />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/sms-campaigns/:id" element={
-            <ProtectedRoute>
-              <SMSCampaignDetail />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/bulk-sms" element={
-            <ProtectedRoute>
-              <BulkSMSSender />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/email-campaigns" element={
-            <ProtectedRoute>
-              <EmailCampaigns />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/email-campaigns/:id" element={
-            <ProtectedRoute>
-              <EmailCampaignDetail />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/bulk-email" element={
-            <ProtectedRoute>
-              <BulkEmailSender />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/email-automations" element={
-            <ProtectedRoute requiredRole="admin">
-              <EmailAutomations />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/email-automations/settings" element={
-            <ProtectedRoute requiredRole="admin">
-              <EmailAutomationSettings />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/campaigns/overview" element={
-            <ProtectedRoute>
-              <CampaignOverview />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/campaigns/insights" element={
-            <ProtectedRoute>
-              <AIInsightsDashboard />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/communications" element={
-            <ProtectedRoute>
-              <Communications />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/queue-status" element={
-            <ProtectedRoute>
-              <QueueStatus />
-            </ProtectedRoute>
-          } />
+          {/* Campaigns are external: wa.in-sync.co.in / email.in-sync.co.in */}
           
           {/* Admin Routes */}
           <Route path="/admin" element={
@@ -355,12 +247,6 @@ const App = () => (
             </ProtectedRoute>
           } />
           
-          <Route path="/admin/api-keys" element={
-            <ProtectedRoute requiredRole="admin">
-              <ApiKeys />
-            </ProtectedRoute>
-          } />
-          
           <Route path="/admin/outbound-webhooks" element={
             <ProtectedRoute requiredRole="admin">
               <OutboundWebhooks />
@@ -392,57 +278,15 @@ const App = () => (
           } />
           
           {/* Other Routes */}
-          <Route path="/org-chart" element={
-            <ProtectedRoute>
-              <OrgChart />
-            </ProtectedRoute>
-          } />
-          
           <Route path="/platform-admin" element={
             <ProtectedRoute>
               <PlatformAdmin />
             </ProtectedRoute>
           } />
           
-          <Route path="/platform-admin/subscriptions" element={
-            <ProtectedRoute>
-              <Subscriptions />
-            </ProtectedRoute>
-          } />
-          
           <Route path="/admin/data-export" element={
             <ProtectedRoute>
               <DataExport />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/documentation" element={
-            <ProtectedRoute>
-              <Documentation />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/redefine-repository" element={
-            <ProtectedRoute>
-              <RedefineDataRepository />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/inventory" element={
-            <ProtectedRoute>
-              <Inventory />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/billing-system" element={
-            <ProtectedRoute>
-              <BillingSystem />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/tasks" element={
-            <ProtectedRoute>
-              <Tasks />
             </ProtectedRoute>
           } />
           
@@ -464,14 +308,6 @@ const App = () => (
              </ProtectedRoute>
            } />
            
-          {/* GST Dashboard is now integrated into main Dashboard */}
-          
-          <Route path="/support-tickets" element={
-            <ProtectedRoute>
-              <SupportTickets />
-            </ProtectedRoute>
-          } />
-          
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
