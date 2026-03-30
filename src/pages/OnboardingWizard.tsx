@@ -437,12 +437,16 @@ export default function OnboardingWizard() {
 
     setLoading(true);
     try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
       const records = validInvites.map((inv) => ({
         org_id: orgId,
         email: inv.email.trim().toLowerCase(),
         role: inv.role,
         invited_by: userId,
         invite_code: crypto.randomUUID(),
+        expires_at: expiresAt.toISOString(),
       }));
 
       const { error } = await supabase.from("org_invites").insert(records);
