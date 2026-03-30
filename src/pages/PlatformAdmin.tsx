@@ -88,7 +88,8 @@ export default function PlatformAdmin() {
     } catch (error: any) {
       notify.error("Error", error);
     }
-  }, [navigate, notify]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!authorized) return;
@@ -138,7 +139,8 @@ export default function PlatformAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [authorized, notify]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorized]);
 
   useEffect(() => { checkAccess(); }, [checkAccess]);
   useEffect(() => { fetchData(); }, [fetchData]);

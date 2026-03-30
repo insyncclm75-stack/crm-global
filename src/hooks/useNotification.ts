@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export interface NotificationActions {
@@ -12,7 +13,7 @@ export interface NotificationActions {
  * Provides consistent toast notifications across the application
  */
 export function useNotification(): NotificationActions {
-  return {
+  return useMemo(() => ({
     success: (title: string, description?: string) => {
       toast({ title, description });
     },
@@ -29,5 +30,5 @@ export function useNotification(): NotificationActions {
     confirm: (message: string) => {
       return window.confirm(message);
     },
-  };
+  }), []);
 }
