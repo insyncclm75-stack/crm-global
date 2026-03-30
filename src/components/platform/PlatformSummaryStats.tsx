@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, UserCheck, Activity, PhoneCall, Mail } from "lucide-react";
+import { Building2, Users, UserCheck, Activity, PhoneCall, Mail, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PlatformStats {
   totalOrgs: number;
@@ -17,66 +16,109 @@ interface Props {
   stats: PlatformStats;
 }
 
-export function PlatformSummaryStats({ stats }: Props) {
-  const cards = [
-    {
-      title: "Organizations",
-      value: stats.totalOrgs,
-      icon: Building2,
-      color: "text-primary",
-      sub: `${stats.activeOrgs} active`,
-    },
-    {
-      title: "Total Users",
-      value: stats.totalUsers,
-      icon: Users,
-      color: "text-blue-500",
-      sub: `across all organizations`,
-    },
-    {
-      title: "Active Today",
-      value: stats.usersLast1Day,
-      icon: UserCheck,
-      color: stats.usersLast1Day > 0 ? "text-green-500" : "text-muted-foreground",
-      sub: `${stats.usersLast7Days} this week`,
-    },
-    {
-      title: "Active 30 Days",
-      value: stats.usersLast30Days,
-      icon: Activity,
-      color: stats.usersLast30Days > 0 ? "text-emerald-500" : "text-muted-foreground",
-      sub: `${stats.totalContacts.toLocaleString()} contacts`,
-    },
-    {
-      title: "Call Volume",
-      value: stats.callVolume.toLocaleString(),
-      icon: PhoneCall,
-      color: "text-orange-500",
-      sub: "total calls logged",
-    },
-    {
-      title: "Email Volume",
-      value: stats.emailVolume.toLocaleString(),
-      icon: Mail,
-      color: "text-violet-500",
-      sub: "total emails sent",
-    },
-  ];
+function KpiCard({
+  label,
+  value,
+  subtitle,
+  icon: Icon,
+  bgIcon: BgIcon,
+  colorClass,
+  borderClass,
+  shadowClass,
+}: {
+  label: string;
+  value: string | number;
+  subtitle: string;
+  icon: typeof Building2;
+  bgIcon: typeof Building2;
+  colorClass: string;
+  borderClass: string;
+  shadowClass: string;
+}) {
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${colorClass} border ${borderClass} p-5 text-left transition-all hover:shadow-lg ${shadowClass} hover:-translate-y-1`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <p className="text-4xl font-extrabold text-foreground">
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </p>
+      <p className="text-[11px] text-muted-foreground mt-1">{subtitle}</p>
+      <div className="absolute bottom-0 right-0 opacity-[0.07] group-hover:opacity-[0.12] transition-opacity">
+        <BgIcon className="h-20 w-20 -mb-3 -mr-3" />
+      </div>
+    </div>
+  );
+}
 
+export function PlatformSummaryStats({ stats }: Props) {
   return (
     <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-      {cards.map((card) => (
-        <Card key={card.title} className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-            <card.icon className={`h-5 w-5 ${card.color}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{card.value}</div>
-            <p className="mt-1 text-xs text-muted-foreground">{card.sub}</p>
-          </CardContent>
-        </Card>
-      ))}
+      <KpiCard
+        label="Organizations"
+        value={stats.totalOrgs}
+        subtitle={`${stats.activeOrgs} active`}
+        icon={Building2}
+        bgIcon={Building2}
+        colorClass="from-primary/15 to-primary/5"
+        borderClass="border-primary/20"
+        shadowClass="hover:shadow-primary/10"
+      />
+      <KpiCard
+        label="Total Users"
+        value={stats.totalUsers}
+        subtitle="across all orgs"
+        icon={Users}
+        bgIcon={Users}
+        colorClass="from-sky-500/15 to-sky-500/5"
+        borderClass="border-sky-500/20"
+        shadowClass="hover:shadow-sky-500/10"
+      />
+      <KpiCard
+        label="Active Today"
+        value={stats.usersLast1Day}
+        subtitle={`${stats.usersLast7Days} this week`}
+        icon={UserCheck}
+        bgIcon={UserCheck}
+        colorClass="from-emerald-500/15 to-emerald-500/5"
+        borderClass="border-emerald-500/20"
+        shadowClass="hover:shadow-emerald-500/10"
+      />
+      <KpiCard
+        label="Active 30 Days"
+        value={stats.usersLast30Days}
+        subtitle={`${stats.totalContacts.toLocaleString()} contacts`}
+        icon={Activity}
+        bgIcon={Activity}
+        colorClass="from-violet-500/15 to-violet-500/5"
+        borderClass="border-violet-500/20"
+        shadowClass="hover:shadow-violet-500/10"
+      />
+      <KpiCard
+        label="Call Volume"
+        value={stats.callVolume}
+        subtitle="total calls logged"
+        icon={PhoneCall}
+        bgIcon={PhoneCall}
+        colorClass="from-amber-500/15 to-amber-500/5"
+        borderClass="border-amber-500/20"
+        shadowClass="hover:shadow-amber-500/10"
+      />
+      <KpiCard
+        label="Email Volume"
+        value={stats.emailVolume}
+        subtitle="total emails sent"
+        icon={Mail}
+        bgIcon={Mail}
+        colorClass="from-rose-500/15 to-rose-500/5"
+        borderClass="border-rose-500/20"
+        shadowClass="hover:shadow-rose-500/10"
+      />
     </div>
   );
 }

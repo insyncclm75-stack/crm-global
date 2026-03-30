@@ -13,6 +13,7 @@ import { PlatformOrgHealth } from "@/components/platform/PlatformOrgHealth";
 import { PlatformOrgsTable } from "@/components/platform/PlatformOrgsTable";
 import { PlatformErrorLogs } from "@/components/platform/PlatformErrorLogs";
 import { PlatformActivityFeed } from "@/components/platform/PlatformActivityFeed";
+import { PlatformAiInsights } from "@/components/platform/PlatformAiInsights";
 
 interface Organization {
   id: string;
@@ -191,12 +192,17 @@ export default function PlatformAdmin() {
           </div>
         </motion.div>
 
-        {/* Row 3: Organizations Table */}
+        {/* Row 3: AI Insights */}
+        <motion.div variants={fadeIn} initial="hidden" animate="visible" transition={{ delay: 0.15 }}>
+          <PlatformAiInsights />
+        </motion.div>
+
+        {/* Row 4: Organizations Table */}
         <motion.div variants={fadeIn} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
           {loading ? <SectionSkeleton height="h-64" /> : <PlatformOrgsTable organizations={organizations} />}
         </motion.div>
 
-        {/* Row 4: Error Logs + Activity Feed */}
+        {/* Row 5: Error Logs + Activity Feed */}
         <motion.div
           variants={fadeIn}
           initial="hidden"

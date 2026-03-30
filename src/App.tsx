@@ -7,6 +7,21 @@ import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthProvider";
 import { OrgContextProvider } from "@/contexts/OrgContextProvider";
 
+// Retry wrapper for lazy imports - handles chunk hash changes after deployment
+function lazyRetry(fn: () => Promise<any>) {
+  return lazy(() =>
+    fn().catch(() => {
+      // Chunk likely changed after deploy; reload once to get fresh HTML
+      const key = "chunk_reload";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+      }
+      return fn(); // fallback: try again
+    })
+  );
+}
+
 // Static imports - public/auth pages only
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -24,53 +39,53 @@ const PageLoader = () => (
 );
 
 // Lazy loaded pages - CRM
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Contacts = lazy(() => import("./pages/Contacts"));
-const ContactDetail = lazy(() => import("./pages/ContactDetail"));
-const PipelineBoard = lazy(() => import("./pages/PipelineBoard"));
-const PipelineAdvancedSearch = lazy(() => import("./pages/PipelineAdvancedSearch"));
-const ClientHub = lazy(() => import("./pages/ClientHub"));
-const ClientDetail = lazy(() => import("./pages/ClientDetail"));
+const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
+const Contacts = lazyRetry(() => import("./pages/Contacts"));
+const ContactDetail = lazyRetry(() => import("./pages/ContactDetail"));
+const PipelineBoard = lazyRetry(() => import("./pages/PipelineBoard"));
+const PipelineAdvancedSearch = lazyRetry(() => import("./pages/PipelineAdvancedSearch"));
+const ClientHub = lazyRetry(() => import("./pages/ClientHub"));
+const ClientDetail = lazyRetry(() => import("./pages/ClientDetail"));
 
 // Lazy loaded pages - Reports & Analytics
-const Reports = lazy(() => import("./pages/Reports"));
-const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
-const SavedReports = lazy(() => import("./pages/SavedReports"));
-const CallingDashboard = lazy(() => import("./pages/CallingDashboard"));
-const CallLogs = lazy(() => import("./pages/CallLogs"));
+const Reports = lazyRetry(() => import("./pages/Reports"));
+const ReportBuilder = lazyRetry(() => import("./pages/ReportBuilder"));
+const SavedReports = lazyRetry(() => import("./pages/SavedReports"));
+const CallingDashboard = lazyRetry(() => import("./pages/CallingDashboard"));
+const CallLogs = lazyRetry(() => import("./pages/CallLogs"));
 
 // Lazy loaded pages - Templates (campaigns are external: wa.in-sync.co.in / email.in-sync.co.in)
-const Templates = lazy(() => import("./pages/Templates"));
-const TemplateBuilder = lazy(() => import("./pages/TemplateBuilder"));
+const Templates = lazyRetry(() => import("./pages/Templates"));
+const TemplateBuilder = lazyRetry(() => import("./pages/TemplateBuilder"));
 
 // Lazy loaded pages - Admin
-const TechAdmin = lazy(() => import("./pages/TechAdmin"));
-const Users = lazy(() => import("./pages/Users"));
-const Teams = lazy(() => import("./pages/Teams"));
-const PipelineStages = lazy(() => import("./pages/PipelineStages"));
-const CallDispositions = lazy(() => import("./pages/CallDispositions"));
-const ApprovalMatrix = lazy(() => import("./pages/ApprovalMatrix"));
-const Designations = lazy(() => import("./pages/Designations"));
-const CustomFields = lazy(() => import("./pages/CustomFields"));
-const Forms = lazy(() => import("./pages/Forms"));
-const Connectors = lazy(() => import("./pages/Connectors"));
-const OutboundWebhooks = lazy(() => import("./pages/OutboundWebhooks"));
-const CommunicationSettings = lazy(() => import("./pages/CommunicationSettings"));
-const WhatsAppSettings = lazy(() => import("./pages/WhatsAppSettings"));
-const ExotelSettings = lazy(() => import("./pages/ExotelSettings"));
-const ApolloSettings = lazy(() => import("./pages/ApolloSettings"));
-const EmailSettings = lazy(() => import("./pages/EmailSettings"));
+const TechAdmin = lazyRetry(() => import("./pages/TechAdmin"));
+const Users = lazyRetry(() => import("./pages/Users"));
+const Teams = lazyRetry(() => import("./pages/Teams"));
+const PipelineStages = lazyRetry(() => import("./pages/PipelineStages"));
+const CallDispositions = lazyRetry(() => import("./pages/CallDispositions"));
+const ApprovalMatrix = lazyRetry(() => import("./pages/ApprovalMatrix"));
+const Designations = lazyRetry(() => import("./pages/Designations"));
+const CustomFields = lazyRetry(() => import("./pages/CustomFields"));
+const Forms = lazyRetry(() => import("./pages/Forms"));
+const Connectors = lazyRetry(() => import("./pages/Connectors"));
+const OutboundWebhooks = lazyRetry(() => import("./pages/OutboundWebhooks"));
+const CommunicationSettings = lazyRetry(() => import("./pages/CommunicationSettings"));
+const WhatsAppSettings = lazyRetry(() => import("./pages/WhatsAppSettings"));
+const ExotelSettings = lazyRetry(() => import("./pages/ExotelSettings"));
+const ApolloSettings = lazyRetry(() => import("./pages/ApolloSettings"));
+const EmailSettings = lazyRetry(() => import("./pages/EmailSettings"));
 
 // Lazy loaded pages - Walkthroughs & Onboarding
-const Demo = lazy(() => import("./pages/Demo"));
-const LandingDemo = lazy(() => import("./pages/LandingDemo"));
-const OnboardingWizard = lazy(() => import("./pages/OnboardingWizard"));
+const Demo = lazyRetry(() => import("./pages/Demo"));
+const LandingDemo = lazyRetry(() => import("./pages/LandingDemo"));
+const OnboardingWizard = lazyRetry(() => import("./pages/OnboardingWizard"));
 
 // Lazy loaded pages - Other
-const DataExport = lazy(() => import("./pages/admin/DataExport"));
-const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin"));
-const Calendar = lazy(() => import("./pages/Calendar"));
-const Chat = lazy(() => import("./pages/Chat"));
+const DataExport = lazyRetry(() => import("./pages/admin/DataExport"));
+const PlatformAdmin = lazyRetry(() => import("./pages/PlatformAdmin"));
+const Calendar = lazyRetry(() => import("./pages/Calendar"));
+const Chat = lazyRetry(() => import("./pages/Chat"));
 
 const App = () => (
   <AuthProvider>
