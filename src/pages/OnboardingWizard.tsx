@@ -1008,9 +1008,6 @@ export default function OnboardingWizard() {
                         <div>
                           <h4 className="text-sm font-semibold">WhatsApp</h4>
                           <p className="text-xs text-muted-foreground">Reach customers on WhatsApp</p>
-                          <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                            Requires Exotel setup in Settings
-                          </p>
                         </div>
                       </div>
                       <Switch checked={channelWhatsApp} onCheckedChange={setChannelWhatsApp} />
@@ -1033,9 +1030,6 @@ export default function OnboardingWizard() {
                         <div>
                           <h4 className="text-sm font-semibold">Calling</h4>
                           <p className="text-xs text-muted-foreground">Integrated cloud calling</p>
-                          <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                            Requires Exotel setup in Settings
-                          </p>
                         </div>
                       </div>
                       <Switch checked={channelCalling} onCheckedChange={setChannelCalling} />
