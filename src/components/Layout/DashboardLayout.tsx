@@ -79,7 +79,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("profiles")
           .select("first_name, last_name, org_id, is_platform_admin, onboarding_completed")
