@@ -70,11 +70,18 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect to onboarding if not completed (skip if already on /onboarding, or if platform admin)
+  // Platform admin: only allow access to /platform-admin
+  if (profileData?.is_platform_admin) {
+    if (location.pathname !== "/platform-admin") {
+      return <Navigate to="/platform-admin" replace />;
+    }
+    return <>{children}</>;
+  }
+
+  // Redirect to onboarding if not completed (skip if already on /onboarding)
   if (
     profileData &&
     !profileData.onboarding_completed &&
-    !profileData.is_platform_admin &&
     location.pathname !== "/onboarding"
   ) {
     return <Navigate to="/onboarding" replace />;

@@ -23,7 +23,17 @@ export default function Login() {
   // Redirect if already authenticated (using centralized auth state)
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return;
+        supabase
+          .from("profiles")
+          .select("is_platform_admin")
+          .eq("id", user.id)
+          .single()
+          .then(({ data }) => {
+            navigate(data?.is_platform_admin ? "/platform-admin" : "/dashboard", { replace: true });
+          });
+      });
     }
   }, [authLoading, isAuthenticated, navigate]);
 
