@@ -65,8 +65,15 @@ export const useFeatureAccess = (): FeatureAccess => {
     // Check org-level feature access
     const orgFeature = orgFeatures?.find(f => f.feature_key === featureKey);
     
-    // If no org feature record exists, check if it's in the default allowed list
-    const defaultAllowedFeatures = ['dashboard']; // Only dashboard is always accessible
+    // If no org feature record exists, default all non-premium features to enabled.
+    // This covers new orgs that don't yet have org_feature_access rows seeded.
+    const defaultAllowedFeatures = [
+      'dashboard', 'contacts', 'pipeline', 'pipeline_stages', 'calling',
+      'forms', 'templates', 'teams', 'custom_fields', 'designations',
+      'users', 'organization_settings', 'call_dispositions', 'email_settings',
+      'exotel_settings', 'whatsapp_settings', 'documentation', 'org_chart',
+      'campaign_overview', 'communications', 'call_logs',
+    ];
     if (!orgFeature) {
       return defaultAllowedFeatures.includes(featureKey);
     }
