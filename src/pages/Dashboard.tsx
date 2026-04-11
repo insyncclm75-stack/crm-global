@@ -9,26 +9,15 @@ import { useCallbackReminders } from "@/hooks/useCallbackReminders";
 import DateRangeFilter, { DateRangePreset, getDateRangeFromPreset } from "@/components/common/DateRangeFilter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, PhoneCall, IndianRupee, ArrowLeft, RefreshCw, Percent } from "lucide-react";
+import { TrendingUp, PhoneCall, RefreshCw } from "lucide-react";
 
 // Extracted Dashboard components
-import { DashboardRevenueCards, type RevenueCardType } from "@/components/Dashboard/DashboardRevenueCards";
-import { RevenueCardDialog } from "@/components/Dashboard/RevenueCardDialog";
-import { DueToDeptDialog } from "@/components/Dashboard/DueToDeptDialog";
-import { DashboardRevenueChart } from "@/components/Dashboard/DashboardRevenueChart";
-
 // Sales pipeline dashboard components
 import { SalesKPICards } from "@/components/Dashboard/SalesKPICards";
 import { PipelineFunnelChart } from "@/components/Dashboard/PipelineFunnelChart";
 import { SalesActivityTrend } from "@/components/Dashboard/SalesActivityTrend";
 import { SalesLeaderboard } from "@/components/Dashboard/SalesLeaderboard";
 
-// Revenue Dashboard components
-import { MonthlyGoalTracker } from "@/components/Revenue/MonthlyGoalTracker";
-import { ProgressionChart } from "@/components/Revenue/ProgressionChart";
-import { RevenueBreakdownTabs } from "@/components/Revenue/RevenueBreakdownTabs";
-import { ContactsListDialog, type MetricType } from "@/components/Revenue/ContactsListDialog";
-import { DashboardGSTSection } from "@/components/Dashboard/DashboardGSTSection";
 
 type DashboardView = "main" | "revenue" | "gst";
 
@@ -1096,75 +1085,32 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-3">
-            {currentView !== "main" && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setCurrentView("main")}
-                className="gap-1.5"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            )}
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">
-                {currentView === "revenue" ? "Revenue Dashboard" : currentView === "gst" ? "GST Dashboard" : "Dashboard"}
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {currentView === "revenue" 
-                  ? "Track revenue, goals, and financial performance" 
-                  : currentView === "gst"
-                  ? "Track GST collected, pending, and filing summaries"
-                  : "Real-time insights into your sales performance"}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+            <p className="text-xs text-muted-foreground">Real-time insights into your sales performance</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {currentView === "main" && (
-              <>
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={() => setCurrentView("revenue")}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <IndianRupee className="h-4 w-4" />
-                  Revenue
-                </Button>
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={() => setCurrentView("gst")}
-                  className="gap-1.5 bg-blue-600 hover:bg-blue-700"
-                >
-                  <Percent className="h-4 w-4" />
-                  GST
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/reports" className="gap-1.5">
-                    <TrendingUp className="h-4 w-4" />
-                    Analytics
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/calling-dashboard" className="gap-1.5">
-                    <PhoneCall className="h-4 w-4" />
-                    Calling
-                  </Link>
-                </Button>
-              </>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/reports" className="gap-1.5">
+                <TrendingUp className="h-4 w-4" />
+                Analytics
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/calling-dashboard" className="gap-1.5">
+                <PhoneCall className="h-4 w-4" />
+                Calling
+              </Link>
+            </Button>
             <DateRangeFilter
               value={dateRange}
               onChange={setDateRange}
@@ -1174,92 +1120,29 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {currentView === "gst" ? (
-          <DashboardGSTSection dateRange={dateRange} />
-        ) : currentView === "revenue" ? (
-          <>
-            {/* Revenue Metrics Cards */}
-            <DashboardRevenueCards
-              revenueStats={revenueStats}
-              formatCurrency={formatCurrency}
-              onCardClick={handleRevenueCardClick}
-            />
+        {/* Sales KPI Cards */}
+        <SalesKPICards
+          newLeads={salesKPIs.newLeads}
+          newLeadsDelta={0}
+          activePipeline={salesKPIs.activePipeline}
+          dealsWon={salesKPIs.dealsWon}
+          winRate={salesKPIs.winRate}
+          totalActivities={salesKPIs.totalActivities}
+          activitiesDelta={0}
+        />
 
-            {/* Revenue Card Drill-down Dialog */}
-            <RevenueCardDialog
-              open={revenueCardDialogOpen}
-              onClose={() => setRevenueCardDialogOpen(false)}
-              cardType={selectedCardType}
-              invoices={getRevenueCardInvoices}
-              dateRangeLabel={`${format(dateRange.from, "MMM d, yyyy")} - ${format(dateRange.to, "MMM d, yyyy")}`}
-            />
+        {/* Pipeline Funnel + Activity Trend */}
+        <div className="grid gap-3 grid-cols-1 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <PipelineFunnelChart stages={pipelineStagesOrdered} />
+          </div>
+          <div className="lg:col-span-2">
+            <SalesActivityTrend data={activityTrendData} isLoading={activityTrendsLoading} />
+          </div>
+        </div>
 
-            {/* Due to Dept Monthly Breakdown Dialog */}
-            <DueToDeptDialog
-              open={dueToDeptDialogOpen}
-              onClose={() => setDueToDeptDialogOpen(false)}
-            />
-
-            {/* Progression Chart - Full Page Animated */}
-            <ProgressionChart monthlyActuals={monthlyActuals} />
-
-            {/* Compact Monthly Goal Tracker Table */}
-            <MonthlyGoalTracker
-              monthlyActuals={monthlyActuals}
-              onCellClick={handleCellClick}
-            />
-
-            {/* Revenue Trend & Breakdown */}
-            <DashboardRevenueChart
-              data={clientRevenueData}
-              clients={uniqueClients}
-              formatCurrency={formatCurrency}
-            />
-
-            {/* Revenue Breakdown by Date, Client, Invoice */}
-            <RevenueBreakdownTabs
-              invoices={invoicesForBreakdown}
-              dateBreakdown={dateBreakdown}
-              clientBreakdown={clientBreakdown}
-            />
-
-            {/* Contacts List Dialog for clickable actuals */}
-            <ContactsListDialog
-              open={dialogOpen}
-              onClose={() => setDialogOpen(false)}
-              month={selectedMonth}
-              metricType={selectedMetric}
-              contacts={dialogData.contacts}
-              invoices={dialogData.invoices}
-            />
-          </>
-        ) : (
-          <>
-            {/* Sales KPI Cards */}
-            <SalesKPICards
-              newLeads={salesKPIs.newLeads}
-              newLeadsDelta={0}
-              activePipeline={salesKPIs.activePipeline}
-              dealsWon={salesKPIs.dealsWon}
-              winRate={salesKPIs.winRate}
-              totalActivities={salesKPIs.totalActivities}
-              activitiesDelta={0}
-            />
-
-            {/* Pipeline Funnel + Activity Trend */}
-            <div className="grid gap-3 grid-cols-1 lg:grid-cols-5">
-              <div className="lg:col-span-3">
-                <PipelineFunnelChart stages={pipelineStagesOrdered} />
-              </div>
-              <div className="lg:col-span-2">
-                <SalesActivityTrend data={activityTrendData} isLoading={activityTrendsLoading} />
-              </div>
-            </div>
-
-            {/* Sales Rep Leaderboard */}
-            <SalesLeaderboard reps={salesReps} isLoading={salesRepsLoading} />
-          </>
-        )}
+        {/* Sales Rep Leaderboard */}
+        <SalesLeaderboard reps={salesReps} isLoading={salesRepsLoading} />
       </div>
 
     </DashboardLayout>
