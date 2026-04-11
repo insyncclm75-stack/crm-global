@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNotification } from "@/hooks/useNotification";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,6 +132,7 @@ const staggerItem = {
 export default function OnboardingWizard() {
   const navigate = useNavigate();
   const notify = useNotification();
+  const queryClient = useQueryClient();
 
   // Step navigation
   const [step, setStep] = useState(0);
@@ -479,6 +481,7 @@ export default function OnboardingWizard() {
       setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.4 } }), 600);
 
       notify.success("Welcome aboard!", "Your workspace is ready.");
+      await queryClient.invalidateQueries({ queryKey: ["user-profile-onboarding"] });
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err: any) {
       notify.error("Error", err);
