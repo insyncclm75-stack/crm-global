@@ -12,13 +12,16 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, PhoneCall, IndianRupee, ArrowLeft, RefreshCw, Percent } from "lucide-react";
 
 // Extracted Dashboard components
-import { DashboardStatsCards } from "@/components/Dashboard/DashboardStatsCards";
 import { DashboardRevenueCards, type RevenueCardType } from "@/components/Dashboard/DashboardRevenueCards";
 import { RevenueCardDialog } from "@/components/Dashboard/RevenueCardDialog";
 import { DueToDeptDialog } from "@/components/Dashboard/DueToDeptDialog";
 import { DashboardRevenueChart } from "@/components/Dashboard/DashboardRevenueChart";
-import { DashboardPipelineChart } from "@/components/Dashboard/DashboardPipelineChart";
-import { DashboardActivityChart } from "@/components/Dashboard/DashboardActivityChart";
+
+// Sales pipeline dashboard components
+import { SalesKPICards } from "@/components/Dashboard/SalesKPICards";
+import { PipelineFunnelChart } from "@/components/Dashboard/PipelineFunnelChart";
+import { SalesActivityTrend } from "@/components/Dashboard/SalesActivityTrend";
+import { SalesLeaderboard } from "@/components/Dashboard/SalesLeaderboard";
 
 // Revenue Dashboard components
 import { MonthlyGoalTracker } from "@/components/Revenue/MonthlyGoalTracker";
@@ -123,6 +126,96 @@ export default function Dashboard() {
       });
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch ordered pipeline stages with colors for funnel chart
+  const { data: pipelineStagesOrdered = [], isLoading: pipelineFunnelLoading } = useQuery({
+    queryKey: ["pipeline-performance", effectiveOrgId],
+    queryFn: async () => {
+      if (!effectiveOrgId) throw new Error("No organization context");
+      const { data, error } = await supabase.rpc("get_pipeline_performance_report", {
+        p_org_id: effectiveOrgId,
+      });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch sales rep performance
+  const { data: salesReps = [], isLoading: salesRepsLoading } = useQuery({
+    queryKey: ["sales-rep-performance", effectiveOrgId, format(dateRange.from, "yyyy-MM-dd")],
+    queryFn: async () => {
+      if (!effectiveOrgId) throw new Error("No organization context");
+      const { data, error } = await supabase.rpc("get_sales_performance_report", {
+        p_org_id: effectiveOrgId,
+        p_start_date: dateRange.from.toISOString(),
+      });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch activity trends
+  const { data: activityTrendsRaw = [], isLoading: activityTrendsLoading } = useQuery({
+    queryKey: ["sales-activity-trends", effectiveOrgId, format(dateRange.from, "yyyy-MM-dd"), format(dateRange.to, "yyyy-MM-dd")],
+    queryFn: async () => {
+      if (!effectiveOrgId) throw new Error("No organization context");
+      const daysDiff = Math.max(1, Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)));
+      const { data, error } = await supabase.rpc("get_activity_trends", {
+        p_org_id: effectiveOrgId,
+        p_days: Math.min(daysDiff, 90),
+      });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch new contacts added in this period (for KPI)
+  const { data: newLeadsData } = useQuery({
+    queryKey: ["new-leads-period", effectiveOrgId, format(dateRange.from, "yyyy-MM-dd"), format(dateRange.to, "yyyy-MM-dd")],
+    queryFn: async () => {
+      if (!effectiveOrgId) throw new Error("No organization context");
+      const { count, error } = await supabase
+        .from("contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", effectiveOrgId)
+        .gte("created_at", dateRange.from.toISOString())
+        .lte("created_at", dateRange.to.toISOString());
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!effectiveOrgId,
+  });
+
+  // Fetch contacts in won/lost stages for win rate
+  const { data: wonLostData } = useQuery({
+    queryKey: ["won-lost-counts", effectiveOrgId],
+    queryFn: async () => {
+      if (!effectiveOrgId) throw new Error("No organization context");
+      const { data: stages, error: stagesErr } = await supabase
+        .from("pipeline_stages")
+        .select("id, name")
+        .eq("org_id", effectiveOrgId);
+      if (stagesErr) throw stagesErr;
+
+      const wonStage = stages?.find((s) => s.name?.toLowerCase() === "won");
+      const lostStage = stages?.find((s) => s.name?.toLowerCase() === "lost");
+
+      const [wonRes, lostRes] = await Promise.all([
+        wonStage
+          ? supabase.from("contacts").select("id", { count: "exact", head: true }).eq("org_id", effectiveOrgId).eq("pipeline_stage_id", wonStage.id)
+          : Promise.resolve({ count: 0 }),
+        lostStage
+          ? supabase.from("contacts").select("id", { count: "exact", head: true }).eq("org_id", effectiveOrgId).eq("pipeline_stage_id", lostStage.id)
+          : Promise.resolve({ count: 0 }),
+      ]);
+
+      return { won: wonRes.count || 0, lost: lostRes.count || 0 };
     },
     enabled: !!effectiveOrgId,
   });
@@ -952,16 +1045,43 @@ export default function Dashboard() {
     };
   }, [rawStats]);
 
-  // Process pipeline data
+  // Process pipeline data (kept for legacy compat)
   const pipelineData: PipelineData[] = useMemo(() => {
     if (!pipelineRaw || pipelineRaw.length === 0) return [];
-
     return pipelineRaw.map((item: any) => ({
       stage: item.stage_name,
       count: Number(item.contact_count),
       value: Number(item.contact_count),
     }));
   }, [pipelineRaw]);
+
+  // Process activity trends into per-day { date, calls, emails, meetings }
+  const activityTrendData = useMemo(() => {
+    if (!activityTrendsRaw || activityTrendsRaw.length === 0) return [];
+    const map: Record<string, { date: string; calls: number; emails: number; meetings: number }> = {};
+    activityTrendsRaw.forEach((row: any) => {
+      const d = format(new Date(row.activity_date), "MMM d");
+      if (!map[d]) map[d] = { date: d, calls: 0, emails: 0, meetings: 0 };
+      const type = row.activity_type as string;
+      const count = Number(row.activity_count);
+      if (type === "call") map[d].calls += count;
+      else if (type === "email") map[d].emails += count;
+      else if (type === "meeting") map[d].meetings += count;
+    });
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+  }, [activityTrendsRaw]);
+
+  // Compute KPI values for the sales section
+  const salesKPIs = useMemo(() => {
+    const rawStatsObj = typeof rawStats === "string" ? JSON.parse(rawStats) : rawStats;
+    const activePipeline = rawStatsObj?.active_deals ?? 0;
+    const dealsWon = wonLostData?.won ?? 0;
+    const dealsLost = wonLostData?.lost ?? 0;
+    const winRate = dealsWon + dealsLost > 0 ? Math.round((dealsWon / (dealsWon + dealsLost)) * 100) : 0;
+    const newLeads = newLeadsData ?? 0;
+    const totalActivities = activityTrendData.reduce((s, d) => s + d.calls + d.emails + d.meetings, 0);
+    return { activePipeline, dealsWon, winRate, newLeads, totalActivities };
+  }, [rawStats, wonLostData, newLeadsData, activityTrendData]);
 
   // EARLY RETURN - All hooks are now above this point
   if (!effectiveOrgId || loading) {
@@ -1115,44 +1235,29 @@ export default function Dashboard() {
           </>
         ) : (
           <>
-            {/* Key Metrics */}
-            <DashboardStatsCards stats={stats} />
-
-            {/* Revenue Metrics */}
-            <DashboardRevenueCards 
-              revenueStats={revenueStats} 
-              formatCurrency={formatCurrency}
-              onCardClick={handleRevenueCardClick}
+            {/* Sales KPI Cards */}
+            <SalesKPICards
+              newLeads={salesKPIs.newLeads}
+              newLeadsDelta={0}
+              activePipeline={salesKPIs.activePipeline}
+              dealsWon={salesKPIs.dealsWon}
+              winRate={salesKPIs.winRate}
+              totalActivities={salesKPIs.totalActivities}
+              activitiesDelta={0}
             />
 
-            {/* Revenue Card Drill-down Dialog */}
-            <RevenueCardDialog
-              open={revenueCardDialogOpen}
-              onClose={() => setRevenueCardDialogOpen(false)}
-              cardType={selectedCardType}
-              invoices={getRevenueCardInvoices}
-              dateRangeLabel={`${format(dateRange.from, "MMM d, yyyy")} - ${format(dateRange.to, "MMM d, yyyy")}`}
-            />
-
-            {/* Due to Dept Monthly Breakdown Dialog */}
-            <DueToDeptDialog
-              open={dueToDeptDialogOpen}
-              onClose={() => setDueToDeptDialogOpen(false)}
-            />
-
-            {/* Monthly Revenue by Client Chart */}
-            <DashboardRevenueChart 
-              data={clientRevenueData} 
-              clients={uniqueClients}
-              formatCurrency={formatCurrency} 
-            />
-
-            {/* Pipeline Distribution & Communication Activity Charts */}
-            <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
-              <DashboardPipelineChart data={pipelineData} />
-              <DashboardActivityChart data={dailyActivityData} isLoading={activityLoading} />
+            {/* Pipeline Funnel + Activity Trend */}
+            <div className="grid gap-3 grid-cols-1 lg:grid-cols-5">
+              <div className="lg:col-span-3">
+                <PipelineFunnelChart stages={pipelineStagesOrdered} />
+              </div>
+              <div className="lg:col-span-2">
+                <SalesActivityTrend data={activityTrendData} isLoading={activityTrendsLoading} />
+              </div>
             </div>
 
+            {/* Sales Rep Leaderboard */}
+            <SalesLeaderboard reps={salesReps} isLoading={salesRepsLoading} />
           </>
         )}
       </div>
