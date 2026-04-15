@@ -78,6 +78,7 @@ export function useNotifications() {
         .from("notifications" as any)
         .select("*")
         .eq("user_id", user.id)
+        .eq("org_id", effectiveOrgId)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -115,6 +116,7 @@ export function useNotifications() {
         .from("notifications" as any)
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq("user_id", user.id)
+        .eq("org_id", effectiveOrgId)
         .eq("is_read", false);
 
       if (error) throw error;
@@ -164,6 +166,7 @@ export function useNotifications() {
     table: "notifications",
     onInsert: handleInsert,
     onUpdate: handleUpdate,
+    filter: effectiveOrgId ? `org_id=eq.${effectiveOrgId}` : undefined,
     enabled: !!effectiveOrgId,
   });
 
